@@ -485,6 +485,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.6.0"
+  refbot_core:
+    dependency: "direct main"
+    description:
+      path: "../packages/refbot_core"
+      relative: true
+    source: path
+    version: "1.0.0"
   shared_preferences:
     dependency: "direct main"
     description:
