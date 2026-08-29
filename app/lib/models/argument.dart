@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
+import 'analysis.dart';
 import 'enums.dart';
 
 part 'argument.g.dart';
@@ -13,6 +14,7 @@ class Argument {
     required this.body,
     required this.createdAt,
     this.authorName,
+    this.analysis,
   });
 
   final String id;
@@ -21,6 +23,7 @@ class Argument {
   final String body;
   final DateTime createdAt;
   final String? authorName;
+  final Analysis? analysis;
 
   factory Argument.fromJson(Map<String, dynamic> json) =>
       _$ArgumentFromJson(json);

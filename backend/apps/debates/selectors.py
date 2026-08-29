@@ -5,7 +5,9 @@ from .models import Debate
 
 def debate_get(debate_id) -> Debate:
     debate = (
-        Debate.objects.prefetch_related("participants", "arguments__participant")
+        Debate.objects.prefetch_related(
+            "participants", "arguments__participant", "arguments__analysis"
+        )
         .filter(pk=debate_id)
         .first()
     )

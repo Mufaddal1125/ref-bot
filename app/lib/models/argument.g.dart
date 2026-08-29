@@ -13,6 +13,9 @@ Argument _$ArgumentFromJson(Map<String, dynamic> json) => Argument(
   body: json['body'] as String,
   createdAt: DateTime.parse(json['created_at'] as String),
   authorName: json['author_name'] as String?,
+  analysis: json['analysis'] == null
+      ? null
+      : Analysis.fromJson(json['analysis'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$ArgumentToJson(Argument instance) => <String, dynamic>{
@@ -22,6 +25,7 @@ Map<String, dynamic> _$ArgumentToJson(Argument instance) => <String, dynamic>{
   'body': instance.body,
   'created_at': instance.createdAt.toIso8601String(),
   'author_name': ?instance.authorName,
+  'analysis': ?instance.analysis,
 };
 
 const _$SideEnumMap = {Side.teamA: 'team_a', Side.teamB: 'team_b'};
