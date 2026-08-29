@@ -97,6 +97,15 @@ One line, or none.
 class DebateSocket {
 ```
 
+## HTTP
+
+`dio`, not `package:http`. One `Dio` per `ApiClient`, with `baseUrl` from `Env` and an
+`InterceptorsWrapper` that adds the participant token — so no call site touches headers.
+
+`_read` is the only place that knows about `DioException`: it maps a JSON error body to
+`ApiException`, and a missing body to a `code: 'unreachable'`. Nothing outside `ApiClient`
+imports `dio`.
+
 ## Errors
 
 `ApiClient` throws `ApiException(status, code, message)`; providers catch it and set `error`. Widgets read `error` and render it. Let anything unexpected crash in dev — a swallowed exception is a bug nobody can see from the back row.
