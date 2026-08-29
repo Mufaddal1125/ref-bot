@@ -103,7 +103,7 @@ class DebateSocket {
 
 ## Starter stubs
 
-Phase starter commits ship every file present and compiling, with bodies replaced by:
+Phase starter commits ship every file present, compiling, and analysing clean, with bodies replaced by a TODO. A method that returns data throws:
 
 ```dart
 Future<void> submitArgument(String body) async {
@@ -111,7 +111,31 @@ Future<void> submitArgument(String body) async {
 }
 ```
 
-Keep the signature, the doc comment, and the imports real. Only the body is missing, so `flutter run` still works at the starter tag.
+A `build` returns a `Placeholder()` where the missing layout goes, so `flutter run` still works at the starter tag and the crossed boxes on screen are the to-do list:
+
+```dart
+@override
+Widget build(BuildContext context) {
+  // TODO(step 8): a Card holding the side, the round and the body.
+  return const Card(child: SizedBox(height: 72, child: Placeholder()));
+}
+```
+
+Keep the signature, the doc comment, and the imports real — but drop an import the stub no longer uses and name it in the TODO instead, so `flutter analyze` stays clean at every tag, starters included. Where a stub leaves a field or a callback dangling, either keep the button that calls it or add an `// ignore:` with a one-line reason.
+
+## Tests
+
+`app/test/` holds one file per widget worth pinning down, named after it. They are written *for* the student: a phase's tests ship red in its starter and go green as its steps land, so `flutter test` reports progress on the client the way `pytest` does on the server.
+
+Pump the widget with plain constructor arguments where it takes them, and wrap it in a `ChangeNotifierProvider` only when it reads one:
+
+```dart
+await tester.pumpWidget(
+  MaterialApp(home: Scaffold(body: TurnBanner(debate: debate, role: Role.teamA))),
+);
+```
+
+Assert on what the room can see — the text, how many tiles, which button is disabled — never on private state.
 
 ## Config
 

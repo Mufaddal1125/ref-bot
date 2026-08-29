@@ -75,6 +75,16 @@ CACHES = {
     },
 }
 
+REST_FRAMEWORK = {
+    # request.user is a Participant, not a Django User.
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "apps.common.authentication.ParticipantTokenAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+    "EXCEPTION_HANDLER": "apps.common.exception_handler.refbot_exception_handler",
+    "UNAUTHENTICATED_USER": None,
+}
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LANGUAGE_CODE = "en-us"
