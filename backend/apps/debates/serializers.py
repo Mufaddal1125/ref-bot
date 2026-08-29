@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from apps.referee.serializers import AnalysisOutSerializer
+
 from .models import Argument, Debate, Participant, Role
 
 # --- input ---------------------------------------------------------------
@@ -31,10 +33,19 @@ class ParticipantOutSerializer(serializers.ModelSerializer):
 
 class ArgumentOutSerializer(serializers.ModelSerializer):
     author_name = serializers.CharField(source="participant.display_name", default=None)
+    analysis = AnalysisOutSerializer(read_only=True)
 
     class Meta:
         model = Argument
-        fields = ["id", "side", "round_number", "body", "author_name", "created_at"]
+        fields = [
+            "id",
+            "side",
+            "round_number",
+            "body",
+            "author_name",
+            "created_at",
+            "analysis",
+        ]
 
 
 class DebateOutSerializer(serializers.ModelSerializer):

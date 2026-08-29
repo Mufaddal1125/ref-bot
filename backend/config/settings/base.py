@@ -28,8 +28,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "django_extensions",
+    "django_rq",
     "apps.common",
     "apps.debates",
+    "apps.referee",
 ]
 
 MIDDLEWARE = [
@@ -96,6 +98,17 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "apps.common.exception_handler.refbot_exception_handler",
     "UNAUTHENTICATED_USER": None,
 }
+
+RQ_QUEUES = {
+    "referee": {"URL": f"{REDIS_URL}/2", "DEFAULT_TIMEOUT": 120},
+}
+
+# AI referee. Any OpenAI-compatible provider is a different base URL and model.
+REFEREE_API_KEY = os.getenv("REFEREE_API_KEY", "")
+REFEREE_MODEL = os.getenv("REFEREE_MODEL", "gemini-3.5-flash-lite")
+REFEREE_BASE_URL = os.getenv(
+    "REFEREE_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/"
+)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

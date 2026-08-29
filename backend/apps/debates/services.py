@@ -74,8 +74,19 @@ def argument_submit(*, debate: Debate, participant: Participant, body: str) -> A
         debate.current_round += 1
     debate.save(update_fields=["current_side", "current_round"])
 
+    _ask_the_referee(argument)
     _announce(debate)
     return argument
+
+
+def _ask_the_referee(argument: Argument) -> None:
+    """Queue the analysis, and show a pending card while the worker gets to it."""
+    # TODO(step 4): nothing happens yet, so the debate still works exactly as it
+    # did in phase 2. Create the Analysis row here so the UI has something to
+    # show, then enqueue apps.referee.jobs.analyze_argument on the "referee"
+    # queue. The enqueue belongs in transaction.on_commit: a worker in another
+    # process must not look for a row this transaction has not committed yet.
+    return
 
 
 @transaction.atomic

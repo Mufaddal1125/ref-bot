@@ -33,6 +33,32 @@ enum Role {
 }
 
 @JsonEnum(valueField: 'wire')
+enum AnalysisStatus {
+  pending('pending'),
+  running('running'),
+  complete('complete'),
+  failed('failed');
+
+  const AnalysisStatus(this.wire);
+
+  final String wire;
+
+  bool get isWaiting => this == pending || this == running;
+}
+
+@JsonEnum(valueField: 'wire')
+enum ClaimAssessment {
+  supported('supported', 'Supported'),
+  unsupported('unsupported', 'Unsupported'),
+  unverifiable('unverifiable', 'Unverifiable');
+
+  const ClaimAssessment(this.wire, this.label);
+
+  final String wire;
+  final String label;
+}
+
+@JsonEnum(valueField: 'wire')
 enum DebateStatus {
   lobby('lobby'),
   active('active'),

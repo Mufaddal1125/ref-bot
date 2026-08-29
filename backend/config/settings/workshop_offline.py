@@ -23,3 +23,6 @@ CACHES = {
 CHANNEL_LAYERS = {
     "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"},
 }
+
+# No worker to run: referee jobs happen inline, on the request thread.
+RQ_QUEUES = {"referee": {"URL": "redis://localhost:6389/2", "ASYNC": False}}
