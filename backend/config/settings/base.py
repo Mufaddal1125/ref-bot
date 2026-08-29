@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "apps.common",
     "apps.debates",
     "apps.referee",
+    "apps.voting",
 ]
 
 MIDDLEWARE = [
