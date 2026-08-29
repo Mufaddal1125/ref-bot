@@ -3,6 +3,7 @@ import 'package:json_annotation/json_annotation.dart';
 import 'argument.dart';
 import 'enums.dart';
 import 'participant.dart';
+import 'vote_tally.dart';
 
 part 'debate.g.dart';
 
@@ -17,6 +18,8 @@ class Debate {
     required this.currentRound,
     this.participants = const [],
     this.arguments = const [],
+    this.tally = const VoteTally(),
+    this.myVote,
   });
 
   final String id;
@@ -27,6 +30,10 @@ class Debate {
   final int currentRound;
   final List<Participant> participants;
   final List<Argument> arguments;
+  final VoteTally tally;
+
+  /// Only a request knows who is asking, so a socket push leaves this null.
+  final Side? myVote;
 
   /// Whether somebody in this role may submit right now.
   bool isTurnOf(Role role) =>

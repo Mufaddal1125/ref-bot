@@ -23,6 +23,10 @@ Debate _$DebateFromJson(Map<String, dynamic> json) => Debate(
           ?.map((e) => Argument.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
+  tally: json['tally'] == null
+      ? const VoteTally()
+      : VoteTally.fromJson(json['tally'] as Map<String, dynamic>),
+  myVote: $enumDecodeNullable(_$SideEnumMap, json['my_vote']),
 );
 
 Map<String, dynamic> _$DebateToJson(Debate instance) => <String, dynamic>{
@@ -34,6 +38,8 @@ Map<String, dynamic> _$DebateToJson(Debate instance) => <String, dynamic>{
   'current_round': instance.currentRound,
   'participants': instance.participants,
   'arguments': instance.arguments,
+  'tally': instance.tally,
+  'my_vote': ?_$SideEnumMap[instance.myVote],
 };
 
 const _$DebateStatusEnumMap = {

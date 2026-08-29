@@ -6,6 +6,7 @@ import '../core/api_client.dart';
 import '../core/api_exception.dart';
 import '../core/debate_socket.dart';
 import '../models/debate.dart';
+import '../models/enums.dart';
 import '../models/server_event.dart';
 
 /// The debate on screen. Actions go out over HTTP; state comes back on the socket.
@@ -22,11 +23,13 @@ class DebateProvider extends ChangeNotifier {
   DebateSocket? _socket;
   StreamSubscription<ServerEvent>? _subscription;
   String? _debateId;
+  Side? _myVote;
 
   Debate? get debate => _debate;
   bool get isLoading => _isLoading;
   bool get isConnected => _isConnected;
   String? get error => _error;
+  Side? get myVote => _myVote;
 
   void connect(String debateId) {
     _debateId = debateId;
@@ -42,12 +45,24 @@ class DebateProvider extends ChangeNotifier {
 
   Future<void> end() => _act(_api.endDebate);
 
+  Future<void> vote(Side choice) async {
+    // TODO(step 5): cast the vote, then remember the choice so this device
+    // shows the result instead of the ballot again.
+    throw UnimplementedError();
+  }
+
+  Future<void> close() async {
+    // TODO(step 5)
+    throw UnimplementedError();
+  }
+
   Future<void> disconnect() async {
     await _subscription?.cancel();
     await _socket?.dispose();
     _subscription = null;
     _socket = null;
     _debate = null;
+    _myVote = null;
     _error = null;
     _isConnected = false;
   }
@@ -104,6 +119,8 @@ class DebateProvider extends ChangeNotifier {
 
     try {
       _debate = await _api.fetchDebate(debateId);
+      // TODO(step 5): only this HTTP path carries my_vote. A socket push leaves
+      // it null, so keep what is already here rather than clearing it.
       _error = null;
     } on ApiException catch (e) {
       _error = e.message;

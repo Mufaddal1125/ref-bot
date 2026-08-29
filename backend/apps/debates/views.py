@@ -43,7 +43,9 @@ class DebateDetailApi(APIView):
 
     def get(self, request, debate_id):
         debate = debate_get(debate_id)
-        return Response(DebateDetailSerializer(debate).data)
+        return Response(
+            DebateDetailSerializer(debate, context={"participant": request.user}).data
+        )
 
 
 class ArgumentCreateApi(APIView):

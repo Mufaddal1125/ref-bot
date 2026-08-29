@@ -96,6 +96,8 @@ class _DebateBody extends StatelessWidget {
           ),
         Expanded(child: _History(debate: debate)),
         if (debate.isTurnOf(role)) const ArgumentComposer(),
+        // TODO(step 8): show VotePanel (in widgets/vote_panel.dart) once the
+        // debate reaches voting, and stays there once it is closed.
         if (role == Role.moderator) _ModeratorControls(debate: debate),
       ],
     );
