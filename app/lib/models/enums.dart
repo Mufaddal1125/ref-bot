@@ -1,0 +1,45 @@
+import 'package:json_annotation/json_annotation.dart';
+
+/// `wire` is the value Django sends and expects.
+@JsonEnum(valueField: 'wire')
+enum Side {
+  teamA('team_a', 'Team A'),
+  teamB('team_b', 'Team B');
+
+  const Side(this.wire, this.label);
+
+  final String wire;
+  final String label;
+}
+
+@JsonEnum(valueField: 'wire')
+enum Role {
+  moderator('moderator', 'Moderator'),
+  teamA('team_a', 'Team A'),
+  teamB('team_b', 'Team B'),
+  audience('audience', 'Audience');
+
+  const Role(this.wire, this.label);
+
+  final String wire;
+  final String label;
+
+  /// Which side this role argues for, or null for watchers.
+  Side? get side => switch (this) {
+    Role.teamA => Side.teamA,
+    Role.teamB => Side.teamB,
+    _ => null,
+  };
+}
+
+@JsonEnum(valueField: 'wire')
+enum DebateStatus {
+  lobby('lobby'),
+  active('active'),
+  voting('voting'),
+  closed('closed');
+
+  const DebateStatus(this.wire);
+
+  final String wire;
+}

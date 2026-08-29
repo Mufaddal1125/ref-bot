@@ -117,7 +117,7 @@ Phase starter commits ship every file present and importable, with bodies replac
 ```python
 def argument_submit(*, debate, participant, body):
     """Record an argument and hand the turn to the other side."""
-    raise NotImplementedError  # TODO(step 4): validate turn, create, advance
+    raise NotImplementedError  # TODO(step 3): validate turn, create, advance
 ```
 
 Keep the signature, the docstring, and the imports real. Only the body is missing, so the app still starts at the starter tag.
