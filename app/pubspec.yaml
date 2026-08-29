@@ -40,6 +40,10 @@ dependencies:
   json_annotation: ^4.12.0
   shared_preferences: ^2.5.5
   intl: ^0.20.3
+
+  # A local package, wired by path. No publishing involved.
+  refbot_core:
+    path: ../packages/refbot_core
   dio: ^5.11.0
 
 dev_dependencies:
@@ -60,6 +64,9 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+
+  # TODO(step 5): declare assets/images/ and the SpaceGrotesk family here.
+  # The files are already in assets/ — only the wiring is missing.
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
