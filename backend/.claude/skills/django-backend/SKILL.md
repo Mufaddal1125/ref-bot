@@ -74,13 +74,13 @@ Reach the ORM through `database_sync_to_async`. Broadcast through `apps/common/b
 
 ## The AI provider seam
 
-`apps/referee/clients/` holds one file per provider behind the `RefereeClient` protocol in
-`clients/base.py`. `get_referee_client()` picks one from `settings.REFEREE_PROVIDER`.
+`apps/referee/clients/` is the only place a provider SDK is imported. Clients implement the
+`RefereeClient` protocol in `clients/base.py`: plain arguments in, a `RefereeResult` of
+Pydantic domain objects out.
 
-Clients take plain arguments and return a `RefereeResult` carrying Pydantic domain objects,
-so provider SDK types stay inside their own file. Everything upstream — `jobs.py`, the
-`Analysis` model, the serializer, Flutter — sees the same shape whichever provider answered.
-Adding a provider is one new file plus a `REFEREE_BASE_URL`.
+Everything upstream — `jobs.py`, the `Analysis` model, the serializer, Flutter — sees the
+same shape whoever answered. Another OpenAI-compatible provider needs only a different
+`REFEREE_BASE_URL`; one with its own protocol needs a new file here.
 
 Gemini is reached through the OpenAI SDK against Google's compatibility endpoint:
 `client.chat.completions.parse(..., response_format=RefereeAnalysis)`. `.parse()` builds the
