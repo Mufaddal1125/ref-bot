@@ -8,8 +8,7 @@ def group_name(debate_id) -> str:
 
 def broadcast(debate_id, type_: str, payload: dict) -> None:
     """Push one event to everyone watching a debate, from synchronous code."""
-    # TODO(step 2): group_send the envelope {"type": ..., "payload": ...} to
-    # group_name(debate_id). The channel layer is async and callers are not,
-    # so this needs async_to_sync. The consumer method that receives it is
-    # named by the "type" key of the outer dict.
-    raise NotImplementedError
+    async_to_sync(get_channel_layer().group_send)(
+        group_name(debate_id),
+        {"type": "fanout", "message": {"type": type_, "payload": payload}},
+    )

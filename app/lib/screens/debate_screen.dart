@@ -23,8 +23,14 @@ class _DebateScreenState extends State<DebateScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DebateProvider>().refresh(widget.debateId);
+      context.read<DebateProvider>().connect(widget.debateId);
     });
+  }
+
+  @override
+  void dispose() {
+    context.read<DebateProvider>().disconnect();
+    super.dispose();
   }
 
   @override
@@ -44,16 +50,12 @@ class _DebateScreenState extends State<DebateScreen> {
                 child: Text(debate.joinCode),
               ),
             ),
-          // TODO(phase 2): WebSockets remove the need for this.
           IconButton(
-            onPressed: () => debates.refresh(widget.debateId),
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-          ),
-          IconButton(
-            onPressed: () {
-              debates.clear();
-              session.leave();
+            onPressed: () async {
+              await debates.disconnect();
+              if (context.mounted) {
+                await session.leave();
+              }
             },
             icon: const Icon(Icons.logout),
             tooltip: 'Leave',
@@ -64,7 +66,7 @@ class _DebateScreenState extends State<DebateScreen> {
         null when debates.isLoading => const Center(
           child: CircularProgressIndicator(),
         ),
-        null => Center(child: Text(debates.error ?? 'No debate loaded.')),
+        null => Center(child: Text(debates.error ?? 'Connecting…')),
         final d => _DebateBody(debate: d, role: session.role ?? Role.audience),
       },
     );
@@ -79,17 +81,18 @@ class _DebateBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final error = context.select((DebateProvider p) => p.error);
+    final debates = context.watch<DebateProvider>();
 
     return Column(
       children: [
+        if (!debates.isConnected) const _ReconnectingBanner(),
         TurnBanner(debate: debate, role: role),
-        if (error != null)
+        if (debates.error != null)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             color: Theme.of(context).colorScheme.errorContainer,
-            child: Text(error, textAlign: TextAlign.center),
+            child: Text(debates.error!, textAlign: TextAlign.center),
           ),
         Expanded(child: _History(debate: debate)),
         if (debate.isTurnOf(role)) const ArgumentComposer(),
@@ -122,17 +125,24 @@ class _HistoryState extends State<_History> {
   @override
   void didUpdateWidget(_History oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // TODO(step 8): a broadcast has landed and the history is one longer than
-    // it was. Scroll to the end when that happens — and only then, or the list
-    // yanks itself down while somebody is reading back through it.
-    //
-    // Two things bite here:
-    //  - the new row does not exist until the next frame, so book the scroll
-    //    for after it with WidgetsBinding.instance.addPostFrameCallback;
-    //  - _scroll has no clients until a ListView is attached, and an empty
-    //    history has none. Ask _scroll.hasClients before touching position.
-    //
-    // Then _scroll.animateTo(_scroll.position.maxScrollExtent, ...).
+    // Only when the history actually grew. Following every rebuild would drag
+    // the list back down while somebody is reading through it.
+    if (widget.debate.arguments.length > oldWidget.debate.arguments.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _followNewest());
+    }
+  }
+
+  /// The new row does not exist until the frame after the rebuild, so this
+  /// runs from a post-frame callback and asks whether there is a list at all.
+  void _followNewest() {
+    if (!_scroll.hasClients) {
+      return;
+    }
+    _scroll.animateTo(
+      _scroll.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -147,6 +157,20 @@ class _HistoryState extends State<_History> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: arguments.length,
       itemBuilder: (_, i) => ArgumentTile(argument: arguments[i]),
+    );
+  }
+}
+
+class _ReconnectingBanner extends StatelessWidget {
+  const _ReconnectingBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      color: Theme.of(context).colorScheme.errorContainer,
+      child: const Text('Reconnecting…', textAlign: TextAlign.center),
     );
   }
 }

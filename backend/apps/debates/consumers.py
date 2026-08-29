@@ -16,20 +16,28 @@ class DebateConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.debate_id = self.scope["url_route"]["kwargs"]["debate_id"]
 
-        # TODO(step 1):
-        #   1. Browsers cannot set headers on a WebSocket, so read the token out
-        #      of self.scope["query_string"] with parse_qs.
-        #   2. No matching participant: accept() and then close(CLOSE_UNAUTHORIZED).
-        #      Accepting first is what gives the client a close code it can read
-        #      instead of a refused upgrade it cannot tell from a dead server.
-        #   3. Otherwise join group_name(self.debate_id) and accept().
-        #   4. Send {"type": "connected"} — the client answers it by loading the
-        #      debate over HTTP, so a reconnect resyncs with no special case.
-        raise NotImplementedError
+        # Browsers cannot set headers on a WebSocket, so the token rides the query string.
+        query = parse_qs(self.scope["query_string"].decode())
+        self.participant = await self._participant(query.get("token", [""])[0])
+
+        if self.participant is None:
+            # Accept first, so the client gets a real close code instead of a
+            # refused upgrade it cannot tell apart from the server being down.
+            await self.accept()
+            await self.close(code=CLOSE_UNAUTHORIZED)
+            return
+
+        self.group = group_name(self.debate_id)
+        await self.channel_layer.group_add(self.group, self.channel_name)
+        await self.accept()
+
+        # The client answers this by fetching the current state over HTTP, so a
+        # reconnect resyncs without any special case.
+        await self.send_json({"type": "connected", "payload": {}})
 
     async def disconnect(self, code):
-        # TODO(step 1): leave the group, if this socket ever joined one.
-        raise NotImplementedError
+        if getattr(self, "group", None):
+            await self.channel_layer.group_discard(self.group, self.channel_name)
 
     async def receive_json(self, content, **kwargs):
         """Nothing arrives here in normal use; the client posts to the API instead."""
@@ -45,8 +53,7 @@ class DebateConsumer(AsyncJsonWebsocketConsumer):
 
     async def fanout(self, event):
         """Group messages arrive here and go straight down the wire."""
-        # TODO(step 2): one line.
-        raise NotImplementedError
+        await self.send_json(event["message"])
 
     @database_sync_to_async
     def _participant(self, token):
