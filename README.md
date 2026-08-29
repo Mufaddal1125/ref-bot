@@ -40,6 +40,10 @@ cd ../app
 flutter pub get
 ```
 
+Postgres and Redis deliberately sit on **5442** and **6389**, not their defaults, so RefBot
+does not fight anything already running on 5432 or 6379. If those clash too, change
+`POSTGRES_PORT` / `REDIS_PORT` in `.env` and the matching URLs beside them.
+
 ## Running
 
 Three terminals:
