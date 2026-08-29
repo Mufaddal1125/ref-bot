@@ -81,12 +81,16 @@ def argument_submit(*, debate: Debate, participant: Participant, body: str) -> A
 
 def _ask_the_referee(argument: Argument) -> None:
     """Queue the analysis, and show a pending card while the worker gets to it."""
-    # TODO(step 4): nothing happens yet, so the debate still works exactly as it
-    # did in phase 2. Create the Analysis row here so the UI has something to
-    # show, then enqueue apps.referee.jobs.analyze_argument on the "referee"
-    # queue. The enqueue belongs in transaction.on_commit: a worker in another
-    # process must not look for a row this transaction has not committed yet.
-    return
+    import django_rq
+
+    from apps.referee.models import Analysis
+
+    Analysis.objects.create(argument=argument)
+    transaction.on_commit(
+        lambda: django_rq.get_queue("referee").enqueue(
+            "apps.referee.jobs.analyze_argument", argument.id
+        )
+    )
 
 
 @transaction.atomic

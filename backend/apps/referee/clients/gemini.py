@@ -20,13 +20,24 @@ class GeminiRefereeClient:
         )
 
     def analyze(self, *, topic: str, history: list[str], argument: str) -> RefereeResult:
-        # TODO(step 1): chat.completions.parse with response_format=RefereeAnalysis.
-        # .parse() builds the strict JSON schema out of the Pydantic model, so
-        # write no schema by hand.
-        #
-        # Two things to get right:
-        #   - message.parsed is None when the model refuses or answers off-schema.
-        #     Raise RefereeUnavailable rather than saving an empty result.
-        #   - An OpenAIError means the provider is unreachable. Same exception,
-        #     so nothing upstream learns which provider failed.
-        raise NotImplementedError
+        started = time.monotonic()
+        try:
+            completion = self._client.chat.completions.parse(
+                model=settings.REFEREE_MODEL,
+                messages=build_messages(topic=topic, history=history, argument=argument),
+                response_format=RefereeAnalysis,
+                temperature=0.2,
+            )
+        except OpenAIError as error:
+            raise RefereeUnavailable(str(error)) from error
+
+        message = completion.choices[0].message
+        # parse() returns None when the model refuses or answers off-schema.
+        if message.parsed is None:
+            raise RefereeUnavailable(message.refusal or "The referee returned nothing usable.")
+
+        return RefereeResult(
+            analysis=message.parsed,
+            model=completion.model,
+            latency_ms=int((time.monotonic() - started) * 1000),
+        )
