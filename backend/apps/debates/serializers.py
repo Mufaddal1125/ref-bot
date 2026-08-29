@@ -65,15 +65,31 @@ class DebateOutSerializer(serializers.ModelSerializer):
 class DebateDetailSerializer(DebateOutSerializer):
     participants = ParticipantOutSerializer(many=True, read_only=True)
     arguments = ArgumentOutSerializer(many=True, read_only=True)
-    # TODO(step 4): add `tally` and `my_vote` SerializerMethodFields here, and
-    # list them in Meta.fields.
-    #   tally   -> vote_tally(debate)
-    #   my_vote -> this participant's choice, or None. Only a request knows who
-    #              is asking, so read it from self.context; a broadcast has no
-    #              request and correctly leaves it null.
+    tally = serializers.SerializerMethodField()
+    my_vote = serializers.SerializerMethodField()
 
     class Meta(DebateOutSerializer.Meta):
-        fields = DebateOutSerializer.Meta.fields + ["participants", "arguments"]
+        fields = DebateOutSerializer.Meta.fields + [
+            "participants",
+            "arguments",
+            "tally",
+            "my_vote",
+        ]
+
+    def get_tally(self, debate):
+        from apps.voting.selectors import vote_tally
+
+        return vote_tally(debate)
+
+    def get_my_vote(self, debate):
+        """Only a request knows who is asking; a broadcast leaves this null."""
+        participant = self.context.get("participant")
+        if participant is None:
+            return None
+        vote = next(
+            (v for v in debate.votes.all() if v.participant_id == participant.id), None
+        )
+        return vote.choice if vote else None
 
 
 class SessionSerializer(serializers.Serializer):

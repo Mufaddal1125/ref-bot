@@ -62,15 +62,12 @@ class ApiClient {
   Future<Debate> endDebate(String debateId) async =>
       Debate.fromJson(await _post('/api/debates/$debateId/end/', const {}));
 
-  Future<Debate> vote(String debateId, Side choice) async {
-    // TODO(step 5): POST /api/debates/<id>/vote/ with the wire value.
-    throw UnimplementedError();
-  }
+  Future<Debate> vote(String debateId, Side choice) async => Debate.fromJson(
+    await _post('/api/debates/$debateId/vote/', {'choice': choice.wire}),
+  );
 
-  Future<Debate> closeDebate(String debateId) async {
-    // TODO(step 5)
-    throw UnimplementedError();
-  }
+  Future<Debate> closeDebate(String debateId) async =>
+      Debate.fromJson(await _post('/api/debates/$debateId/close/', const {}));
 
   Future<Map<String, dynamic>> _get(String path) =>
       _read(() => _dio.get<Map<String, dynamic>>(path));

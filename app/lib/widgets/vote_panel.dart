@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../core/theme.dart';
 import '../models/debate.dart';
 import '../models/enums.dart';
+import '../providers/debate_provider.dart';
+import 'tally_bar.dart';
 
 /// Shown once the debate ends: the ballot, then the result.
 class VotePanel extends StatelessWidget {
@@ -12,25 +16,65 @@ class VotePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO(step 8): the ballot, and the result once it has been cast.
-    //
-    // Voting is still open while debate.status is DebateStatus.voting, and
-    // this device has voted when context.watch<DebateProvider>().myVote is
-    // not null. Those two decide everything here:
-    //
-    //   title   'Who won the debate?' while there is still a choice to make,
-    //           'Who won the debate' once there is not — titleMedium
-    //   open and not yet voted   a Row of two Expanded FilledButtons, one per
-    //                            Side.values, each in sideColor(context, side),
-    //                            calling debates.vote(side); null while
-    //                            debates.isLoading
-    //   otherwise                TallyBar(tally: debate.tally)
-    //   moderator, still open    an OutlinedButton 'Close voting' calling
-    //                            debates.close()
-    //
-    // Pull the ballot out into a private _Ballot widget once build passes
-    // sixty lines — a class rebuilds on its own, a _buildBallot() method does
-    // not.
-    return const SizedBox.shrink();
+    final debates = context.watch<DebateProvider>();
+    final stillOpen = debate.status == DebateStatus.voting;
+    final hasVoted = debates.myVote != null;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Text(
+            stillOpen && !hasVoted
+                ? 'Who won the debate?'
+                : 'Who won the debate',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 16),
+          if (stillOpen && !hasVoted)
+            _Ballot(busy: debates.isLoading)
+          else
+            TallyBar(tally: debate.tally),
+          if (role == Role.moderator && stillOpen) ...[
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: debates.close,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+              child: const Text('Close voting'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Ballot extends StatelessWidget {
+  const _Ballot({required this.busy});
+
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    final debates = context.read<DebateProvider>();
+
+    return Row(
+      children: [
+        for (final side in Side.values) ...[
+          if (side == Side.teamB) const SizedBox(width: 12),
+          Expanded(
+            child: FilledButton(
+              onPressed: busy ? null : () => debates.vote(side),
+              style: FilledButton.styleFrom(
+                backgroundColor: sideColor(context, side),
+              ),
+              child: Text(side.label),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 }

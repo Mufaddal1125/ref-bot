@@ -13,16 +13,22 @@ class VoteCreateApi(APIView):
     permission_classes = [IsDebateParticipant]
 
     def post(self, request, debate_id):
-        # TODO(step 3): validate, call vote_cast, return the debate at 201.
-        raise NotImplementedError
+        payload = VoteCreateSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+        vote_cast(
+            debate=debate_get(debate_id),
+            participant=request.user,
+            **payload.validated_data,
+        )
+        return Response(_state(debate_id, request), status=201)
 
 
 class DebateCloseApi(APIView):
     permission_classes = [IsModerator]
 
     def post(self, request, debate_id):
-        # TODO(step 3)
-        raise NotImplementedError
+        debate_close(debate=debate_get(debate_id))
+        return Response(_state(debate_id, request))
 
 
 def _state(debate_id, request):

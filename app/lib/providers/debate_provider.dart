@@ -46,15 +46,14 @@ class DebateProvider extends ChangeNotifier {
   Future<void> end() => _act(_api.endDebate);
 
   Future<void> vote(Side choice) async {
-    // TODO(step 5): cast the vote, then remember the choice so this device
-    // shows the result instead of the ballot again.
-    throw UnimplementedError();
+    await _act((debateId) => _api.vote(debateId, choice));
+    if (_error == null) {
+      _myVote = choice;
+      notifyListeners();
+    }
   }
 
-  Future<void> close() async {
-    // TODO(step 5)
-    throw UnimplementedError();
-  }
+  Future<void> close() => _act(_api.closeDebate);
 
   Future<void> disconnect() async {
     await _subscription?.cancel();
@@ -119,8 +118,8 @@ class DebateProvider extends ChangeNotifier {
 
     try {
       _debate = await _api.fetchDebate(debateId);
-      // TODO(step 5): only this HTTP path carries my_vote. A socket push leaves
-      // it null, so keep what is already here rather than clearing it.
+      // Only this HTTP path carries my_vote; socket pushes leave it null.
+      _myVote = _debate?.myVote ?? _myVote;
       _error = null;
     } on ApiException catch (e) {
       _error = e.message;

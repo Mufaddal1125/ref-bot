@@ -30,19 +30,18 @@ class TallyBar extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        // TODO(step 7): wrap this CustomPaint in a TweenAnimationBuilder<double>
-        // — tween 0.5 to tally.shareA, 450ms, Curves.easeOutCubic — and hand
-        // the builder's value to the painter in place of tally.shareA.
-        //
-        // The painter draws whatever number it is given. Keeping the animation
-        // outside it is what lets the bar slide as votes land, one repaint per
-        // frame, without the painter knowing anything about time.
-        CustomPaint(
-          size: const Size(double.infinity, 28),
-          painter: _TallyBarPainter(
-            shareA: tally.shareA,
-            colorA: colorA,
-            colorB: colorB,
+        // The share animates, so the bar slides as votes land instead of jumping.
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.5, end: tally.shareA),
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeOutCubic,
+          builder: (_, share, _) => CustomPaint(
+            size: const Size(double.infinity, 28),
+            painter: _TallyBarPainter(
+              shareA: share,
+              colorA: colorA,
+              colorB: colorB,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -70,13 +69,22 @@ class _Score extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO(step 7): a Column — crossAxisAlignment end when alignRight, start
-    // otherwise — holding three lines:
-    //
-    //   side.label                  labelLarge, in sideColor(context, side)
-    //   '${(share * 100).round()}%' headlineMedium, same colour
-    //   '$count'                    bodySmall, no colour
-    return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final color = sideColor(context, side);
+
+    return Column(
+      crossAxisAlignment: alignRight
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
+      children: [
+        Text(side.label, style: theme.textTheme.labelLarge?.copyWith(color: color)),
+        Text(
+          '${(share * 100).round()}%',
+          style: theme.textTheme.headlineMedium?.copyWith(color: color),
+        ),
+        Text('$count', style: theme.textTheme.bodySmall),
+      ],
+    );
   }
 }
 
@@ -93,8 +101,21 @@ class _TallyBarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // TODO(step 6): clip the canvas to a fully rounded rectangle, then fill
-    // the left shareA of the width in colorA and the remainder in colorB.
+    final rounded = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(size.height / 2),
+    );
+    canvas.clipRRect(rounded);
+
+    final split = size.width * shareA;
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, split, size.height),
+      Paint()..color = colorA,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(split, 0, size.width - split, size.height),
+      Paint()..color = colorB,
+    );
   }
 
   @override

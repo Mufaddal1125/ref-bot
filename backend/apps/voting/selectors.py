@@ -12,7 +12,20 @@ def tally_key(debate_id) -> str:
 
 def vote_tally(debate) -> dict:
     """Counts per side, cached for a moment so a full room refreshing costs one query."""
-    # TODO(step 1): return the cached tally when there is one. Otherwise count
-    # votes per side with values_list + annotate, shape them as
-    # {"team_a", "team_b", "total"}, cache that for 2 seconds, and return it.
-    raise NotImplementedError
+    cached = cache.get(tally_key(debate.id))
+    if cached is not None:
+        return cached
+
+    counts = dict(
+        Vote.objects.filter(debate=debate)
+        .values_list("choice")
+        .annotate(total=Count("id"))
+    )
+    tally = {
+        "team_a": counts.get(Side.TEAM_A, 0),
+        "team_b": counts.get(Side.TEAM_B, 0),
+    }
+    tally["total"] = tally["team_a"] + tally["team_b"]
+
+    cache.set(tally_key(debate.id), tally, timeout=2)
+    return tally
