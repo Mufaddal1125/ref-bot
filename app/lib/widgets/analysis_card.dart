@@ -14,25 +14,30 @@ class AnalysisCard extends StatelessWidget {
       return const _Line(icon: '✓', text: 'The referee found nothing to flag.');
     }
 
-    // TODO(step 5): a Column, crossAxisAlignment start, holding one _Line for
-    // every finding — a collection-for over each of the three lists in turn:
-    //
-    //   analysis.fallacies       '🚨'  fallacy.name        fallacy.explanation
-    //                                  titled in colorScheme.error
-    //   analysis.missingContext  '⚠'   'Missing context'   gap.text
-    //   analysis.claims          '✓'   '<Assessment> claim'
-    //                                  '“<text>” — <note>'
-    //
-    // Three `for (final x in ...)` clauses inside one children list. No
-    // .map().toList(), no temporary list built up with add().
-    return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final fallacy in analysis.fallacies)
+          _Line(
+            icon: '🚨',
+            title: fallacy.name,
+            text: fallacy.explanation,
+            color: Theme.of(context).colorScheme.error,
+          ),
+        for (final gap in analysis.missingContext)
+          _Line(icon: '⚠', title: 'Missing context', text: gap.text),
+        for (final claim in analysis.claims)
+          _Line(
+            icon: '✓',
+            title: '${claim.assessment.label} claim',
+            text: '“${claim.text}” — ${claim.note}',
+          ),
+      ],
+    );
   }
 }
 
 class _Line extends StatelessWidget {
-  // title and color are for the findings you are about to list; the one call
-  // above needs neither.
-  // ignore: unused_element_parameter
   const _Line({required this.icon, required this.text, this.title, this.color});
 
   final String icon;
