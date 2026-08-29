@@ -22,6 +22,7 @@ class DebateSocket {
   final _events = StreamController<ServerEvent>.broadcast();
   WebSocketChannel? _channel;
   Timer? _retry;
+  int _attempt = 0;
   bool _disposed = false;
 
   Stream<ServerEvent> get events => _events.stream;
@@ -59,6 +60,7 @@ class DebateSocket {
   }
 
   void _onMessage(dynamic message) {
+    _attempt = 0;
     final json = jsonDecode(message as String) as Map<String, dynamic>;
     _events.add(ServerEvent.fromJson(json));
   }
@@ -67,11 +69,20 @@ class DebateSocket {
     if (_disposed) {
       return;
     }
+    if (_channel?.closeCode == closeUnauthorized) {
+      _events.add(
+        const ServerEvent(
+          type: ServerEvent.error,
+          payload: {'message': 'This session is no longer valid.'},
+        ),
+      );
+      return;
+    }
     _events.add(const ServerEvent(type: ServerEvent.disconnected));
 
-    // TODO(step 4): this retries every 2s forever, which is wrong twice over.
-    // A closeUnauthorized will never succeed, so stop and report it instead.
-    // A long outage deserves a growing wait: 1s, 2s, 4s, 8s, then every 16s.
-    _retry = Timer(const Duration(seconds: 2), connect);
+    // 1s, 2s, 4s, 8s, then every 16s.
+    final wait = Duration(seconds: 1 << _attempt);
+    _attempt = (_attempt + 1).clamp(0, 4);
+    _retry = Timer(wait, connect);
   }
 }

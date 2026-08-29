@@ -24,15 +24,17 @@ class _ArgumentComposerState extends State<ArgumentComposer> {
     if (body.isEmpty) {
       return;
     }
-    await context.read<DebateProvider>().submitArgument(body);
-    if (mounted && context.read<DebateProvider>().error == null) {
+    final debates = context.read<DebateProvider>();
+    await debates.submitArgument(body);
+    if (mounted && debates.error == null) {
       _body.clear();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = context.select((DebateProvider p) => p.isLoading);
+    final debates = context.watch<DebateProvider>();
+    final canSend = debates.isConnected && !debates.isLoading;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -48,7 +50,7 @@ class _ArgumentComposerState extends State<ArgumentComposer> {
           ),
           const SizedBox(height: 12),
           FilledButton(
-            onPressed: isLoading ? null : _send,
+            onPressed: canSend ? _send : null,
             child: const Text('Submit argument'),
           ),
         ],

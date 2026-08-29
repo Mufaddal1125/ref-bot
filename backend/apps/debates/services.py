@@ -1,10 +1,23 @@
 from django.db import transaction
 
+from apps.common.broadcast import broadcast
 from apps.common.errors import Conflict, Forbidden, NotFound
 
 from .models import Argument, Debate, DebateStatus, Participant, Role, Side
 
 ROLE_TO_SIDE = {Role.TEAM_A: Side.TEAM_A, Role.TEAM_B: Side.TEAM_B}
+
+
+def _announce(debate: Debate) -> None:
+    """Tell every watcher the debate changed, once the change is really saved."""
+    from .selectors import debate_get
+    from .serializers import DebateDetailSerializer
+
+    transaction.on_commit(
+        lambda: broadcast(
+            debate.id, "debate.updated", DebateDetailSerializer(debate_get(debate.id)).data
+        )
+    )
 
 
 @transaction.atomic
@@ -61,6 +74,7 @@ def argument_submit(*, debate: Debate, participant: Participant, body: str) -> A
         debate.current_round += 1
     debate.save(update_fields=["current_side", "current_round"])
 
+    _announce(debate)
     return argument
 
 
@@ -70,6 +84,7 @@ def debate_start(*, debate: Debate) -> Debate:
         raise Conflict("This debate has already started.")
     debate.status = DebateStatus.ACTIVE
     debate.save(update_fields=["status"])
+    _announce(debate)
     return debate
 
 
@@ -79,4 +94,5 @@ def debate_end(*, debate: Debate) -> Debate:
         raise Conflict("Only a running debate can be ended.")
     debate.status = DebateStatus.VOTING
     debate.save(update_fields=["status"])
+    _announce(debate)
     return debate
