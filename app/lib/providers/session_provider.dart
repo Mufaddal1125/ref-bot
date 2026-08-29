@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:refbot_core/refbot_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/api_client.dart';
@@ -33,7 +34,7 @@ class SessionProvider extends ChangeNotifier {
     if (token != null && wire != null) {
       _api.token = token;
       _debateId = prefs.getString(_debateKey);
-      _role = Role.values.firstWhere((r) => r.wire == wire);
+      _role = fromWire(Role.values, wire);
     }
     _restored = true;
     notifyListeners();

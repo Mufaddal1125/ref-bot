@@ -65,8 +65,15 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
 
-  # TODO(step 5): declare assets/images/ and the SpaceGrotesk family here.
-  # The files are already in assets/ — only the wiring is missing.
+  assets:
+    - assets/images/
+
+  fonts:
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Regular.ttf
+        - asset: assets/fonts/SpaceGrotesk-Bold.ttf
+          weight: 700
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

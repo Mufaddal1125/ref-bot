@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:refbot_core/refbot_core.dart';
 
 import '../models/enums.dart';
 import '../providers/session_provider.dart';
@@ -27,11 +28,11 @@ class _JoinScreenState extends State<JoinScreen> {
   }
 
   void _submit() {
-    if (_code.text.trim().isEmpty || _name.text.trim().isEmpty) {
+    if (!isValidJoinCode(_code.text) || _name.text.trim().isEmpty) {
       return;
     }
     context.read<SessionProvider>().join(
-      joinCode: _code.text.trim(),
+      joinCode: normalizeJoinCode(_code.text),
       displayName: _name.text.trim(),
       role: _role,
     );
@@ -56,9 +57,13 @@ class _JoinScreenState extends State<JoinScreen> {
               TextField(
                 controller: _code,
                 textCapitalization: TextCapitalization.characters,
-                decoration: const InputDecoration(
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
                   labelText: 'Join code',
-                  hintText: 'ABC123',
+                  hintText: 'ABC234',
+                  errorText: _code.text.isEmpty || isValidJoinCode(_code.text)
+                      ? null
+                      : 'Six characters, no I, L, O or U',
                 ),
               ),
               const SizedBox(height: 16),
