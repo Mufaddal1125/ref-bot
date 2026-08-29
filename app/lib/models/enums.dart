@@ -1,19 +1,21 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:refbot_core/refbot_core.dart';
 
 /// `wire` is the value Django sends and expects.
 @JsonEnum(valueField: 'wire')
-enum Side {
+enum Side with Wire {
   teamA('team_a', 'Team A'),
   teamB('team_b', 'Team B');
 
   const Side(this.wire, this.label);
 
+  @override
   final String wire;
   final String label;
 }
 
 @JsonEnum(valueField: 'wire')
-enum Role {
+enum Role with Wire {
   moderator('moderator', 'Moderator'),
   teamA('team_a', 'Team A'),
   teamB('team_b', 'Team B'),
@@ -21,6 +23,7 @@ enum Role {
 
   const Role(this.wire, this.label);
 
+  @override
   final String wire;
   final String label;
 
@@ -33,7 +36,7 @@ enum Role {
 }
 
 @JsonEnum(valueField: 'wire')
-enum AnalysisStatus {
+enum AnalysisStatus with Wire {
   pending('pending'),
   running('running'),
   complete('complete'),
@@ -41,25 +44,27 @@ enum AnalysisStatus {
 
   const AnalysisStatus(this.wire);
 
+  @override
   final String wire;
 
   bool get isWaiting => this == pending || this == running;
 }
 
 @JsonEnum(valueField: 'wire')
-enum ClaimAssessment {
+enum ClaimAssessment with Wire {
   supported('supported', 'Supported'),
   unsupported('unsupported', 'Unsupported'),
   unverifiable('unverifiable', 'Unverifiable');
 
   const ClaimAssessment(this.wire, this.label);
 
+  @override
   final String wire;
   final String label;
 }
 
 @JsonEnum(valueField: 'wire')
-enum DebateStatus {
+enum DebateStatus with Wire {
   lobby('lobby'),
   active('active'),
   voting('voting'),
@@ -67,5 +72,6 @@ enum DebateStatus {
 
   const DebateStatus(this.wire);
 
+  @override
   final String wire;
 }

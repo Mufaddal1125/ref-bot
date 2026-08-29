@@ -7,6 +7,7 @@ import '../providers/debate_provider.dart';
 import '../providers/session_provider.dart';
 import '../widgets/argument_composer.dart';
 import '../widgets/argument_tile.dart';
+import '../widgets/participant_grid.dart';
 import '../widgets/turn_banner.dart';
 import '../widgets/vote_panel.dart';
 
@@ -84,6 +85,9 @@ class _DebateBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final debates = context.watch<DebateProvider>();
 
+    // A projector is wide; a phone is not. One breakpoint, one layout each.
+    final isWide = MediaQuery.sizeOf(context).width >= 900;
+
     return Column(
       children: [
         if (!debates.isConnected) const _ReconnectingBanner(),
@@ -95,7 +99,24 @@ class _DebateBody extends StatelessWidget {
             color: Theme.of(context).colorScheme.errorContainer,
             child: Text(debates.error!, textAlign: TextAlign.center),
           ),
-        Expanded(child: _History(debate: debate)),
+        Expanded(
+          child: isWide
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 3, child: _History(debate: debate)),
+                    const VerticalDivider(width: 1),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: ParticipantGrid(
+                          participants: debate.participants,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : _History(debate: debate),
+        ),
         if (debate.isTurnOf(role)) const ArgumentComposer(),
         if (debate.status == DebateStatus.voting ||
             debate.status == DebateStatus.closed)

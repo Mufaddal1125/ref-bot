@@ -5,13 +5,12 @@ const joinCodeAlphabet = 'ABCDEFGHJKMNPQRSTVWXYZ23456789';
 const joinCodeLength = 6;
 
 /// Upper-cases and strips the spaces and dashes people add when reading aloud.
-String normalizeJoinCode(String input) {
-  // TODO(step 1)
-  throw UnimplementedError();
-}
+String normalizeJoinCode(String input) =>
+    input.toUpperCase().replaceAll(RegExp(r'[\s-]'), '');
 
 /// Whether a normalized code could exist. Only the server knows if it does.
 bool isValidJoinCode(String input) {
-  // TODO(step 1): the right length, and every character from the alphabet.
-  throw UnimplementedError();
+  final code = normalizeJoinCode(input);
+  return code.length == joinCodeLength &&
+      code.split('').every(joinCodeAlphabet.contains);
 }

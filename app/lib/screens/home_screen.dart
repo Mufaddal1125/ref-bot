@@ -15,8 +15,8 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('🥊', style: Theme.of(context).textTheme.displayMedium),
-                const SizedBox(height: 8),
+                Image.asset('assets/images/refbot.png', width: 96, height: 96),
+                const SizedBox(height: 12),
                 Text('RefBot', style: Theme.of(context).textTheme.headlineMedium),
                 const SizedBox(height: 4),
                 Text(

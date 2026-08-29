@@ -4,6 +4,7 @@ import '../models/enums.dart';
 
 final refbotTheme = ThemeData(
   colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3B5BDB)),
+  fontFamily: 'SpaceGrotesk',
   filledButtonTheme: FilledButtonThemeData(
     style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
   ),
