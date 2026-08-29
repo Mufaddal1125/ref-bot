@@ -8,11 +8,15 @@ The product brief is [docs/project-plan.md](docs/project-plan.md).
 ## Layout
 
 ```
-backend/   Django project (config/ + apps/)
-app/       Flutter client (all platforms, one codebase)
-docs/      Product brief, API contract, per-phase facilitator notes
-scripts/   dev + checkpoint helpers
+backend/    Django project (config/ + apps/)
+app/        Flutter client (all platforms, one codebase)
+packages/   Local Dart packages the client depends on by path
+docs/       Product brief, syllabus map, per-phase facilitator notes
+scripts/    dev + checkpoint helpers
 ```
+
+[docs/syllabus-map.md](docs/syllabus-map.md) maps every course topic to the file and phase
+where it is used.
 
 ## Prerequisites
 
@@ -84,9 +88,22 @@ For a phone, run the backend on all interfaces and open the port:
 python manage.py runserver 0.0.0.0:8000
 ```
 
+## Tests
+
+Every phase ships its tests red in the starter tag and green in the complete tag, on both
+sides of the app. They are the fastest way to see how far along you are.
+
+```bash
+cd backend && .venv/Scripts/python -m pytest   # the rules
+cd app && flutter test                         # the widgets
+cd packages/refbot_core && dart test           # the shared package, from phase 5
+```
+
 ## Phases
 
-Each phase has a starter tag you code from and a completed tag you code to.
+Each phase has a starter tag you code from and a completed tag you code to. Both the server
+and the client are yours to write: the starter has the models, the generated code and one
+worked example of each shape, and a `Placeholder()` wherever a screen or a widget is missing.
 Facilitator notes live in `docs/phase-N.md`.
 
 | Phase | Tags | Ends with |
@@ -95,6 +112,7 @@ Facilitator notes live in `docs/phase-N.md`.
 | 2 — Live | `phase-2-start` → `phase-2-complete` | Channels; the refresh button is deleted |
 | 3 — AI referee | `phase-3-start` → `phase-3-complete` | Gemini structured output via an RQ job |
 | 4 — Voting | `phase-4-start` → `phase-4-complete` | Audience votes, results update live |
+| 5 — Polish & package | `phase-5-start` → `phase-5-complete` | A Dart package, branding, a projector layout, an installable PWA |
 
 To see exactly what a phase asks you to write:
 
