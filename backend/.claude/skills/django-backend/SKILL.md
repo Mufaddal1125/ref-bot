@@ -66,11 +66,17 @@ class ArgumentCreateApi(APIView):
 
 ## Consumers
 
-`receive_json` looks the incoming `type` up in a dict of handlers, then calls a service. Logic stays in the service.
+**The socket only sends.** Every change arrives as a REST request; the consumer authenticates,
+joins the debate's group, and fans broadcasts out. It calls no service and makes no
+authorisation decision of its own, so there is nothing to keep in step with the permission
+classes.
 
-Every message, both directions: `{"type": ..., "payload": {...}}`.
+That split also settles who sees a failure: a rejected write is an HTTP error for its one
+caller, and a successful one is a broadcast for everybody.
 
-Reach the ORM through `database_sync_to_async`. Broadcast through `apps/common/broadcast.py` so sync views and async consumers share one path.
+Server events are `{"type": ..., "payload": {...}}`. Reach the ORM through
+`database_sync_to_async`. Services broadcast through `apps/common/broadcast.py` inside
+`transaction.on_commit`.
 
 ## The AI provider seam
 
