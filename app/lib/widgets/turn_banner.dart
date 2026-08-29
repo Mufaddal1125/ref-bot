@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme.dart';
 import '../models/debate.dart';
 import '../models/enums.dart';
 
@@ -11,20 +12,19 @@ class TurnBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO(step 7): replace this with one switch expression over
-    // debate.status, yielding the text and its colour together as a record:
-    //
-    //   lobby   'Waiting for the moderator to start'          no colour
-    //   active  'Your turn — round N'                         the side's colour
-    //           when debate.isTurnOf(role)
-    //   active  'Team B to speak — round N'                   the side's colour
-    //   voting  'The debate has ended'                        no colour
-    //   closed  'Results are final'                           no colour
-    //
-    // The colour is sideColor(context, debate.currentSide) — import
-    // core/theme.dart. A guarded case (`when`) is how the two active cases
-    // stay one switch. Cover all five and Dart stops asking for a default.
-    final (String text, Color? color) = ('', null);
+    final (text, color) = switch (debate.status) {
+      DebateStatus.lobby => ('Waiting for the moderator to start', null),
+      DebateStatus.active when debate.isTurnOf(role) => (
+        'Your turn — round ${debate.currentRound}',
+        sideColor(context, debate.currentSide),
+      ),
+      DebateStatus.active => (
+        '${debate.currentSide.label} to speak — round ${debate.currentRound}',
+        sideColor(context, debate.currentSide),
+      ),
+      DebateStatus.voting => ('The debate has ended', null),
+      DebateStatus.closed => ('Results are final', null),
+    };
 
     return Container(
       width: double.infinity,

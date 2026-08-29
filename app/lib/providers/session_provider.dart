@@ -26,8 +26,15 @@ class SessionProvider extends ChangeNotifier {
   bool get hasSession => _debateId != null && _api.token != null;
 
   Future<void> restore() async {
-    // TODO(step 6): read the token, debate id and role back out of
-    // SharedPreferences so a browser refresh does not sign you out.
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_tokenKey);
+    final wire = prefs.getString(_roleKey);
+
+    if (token != null && wire != null) {
+      _api.token = token;
+      _debateId = prefs.getString(_debateKey);
+      _role = Role.values.firstWhere((r) => r.wire == wire);
+    }
     _restored = true;
     notifyListeners();
   }
@@ -65,10 +72,15 @@ class SessionProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await call();
-      // TODO(step 6): keep the session's token, debate id and role here, and
-      // write the same three values into SharedPreferences.
-      throw UnimplementedError();
+      final session = await call();
+      _api.token = session.token;
+      _debateId = session.debate.id;
+      _role = session.participant.role;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_tokenKey, _api.token!);
+      await prefs.setString(_debateKey, _debateId!);
+      await prefs.setString(_roleKey, _role!.wire);
     } on ApiException catch (e) {
       _error = e.message;
     } finally {

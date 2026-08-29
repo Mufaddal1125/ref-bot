@@ -6,6 +6,7 @@ import '../models/enums.dart';
 import '../providers/debate_provider.dart';
 import '../providers/session_provider.dart';
 import '../widgets/argument_composer.dart';
+import '../widgets/argument_tile.dart';
 import '../widgets/turn_banner.dart';
 
 class DebateScreen extends StatefulWidget {
@@ -90,12 +91,19 @@ class _DebateBody extends StatelessWidget {
             color: Theme.of(context).colorScheme.errorContainer,
             child: Text(error, textAlign: TextAlign.center),
           ),
-        // TODO(step 8): the debate history, filling whatever is left over.
-        // 'No arguments yet.' centred while debate.arguments is empty;
-        // otherwise a ListView.builder of ArgumentTile, padded 16 across and
-        // 8 down. .builder, not a Column of children: it only builds the rows
-        // on screen, and a long debate is a long list.
-        const Expanded(child: Center(child: Text('No arguments yet.'))),
+        Expanded(
+          child: debate.arguments.isEmpty
+              ? const Center(child: Text('No arguments yet.'))
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  itemCount: debate.arguments.length,
+                  itemBuilder: (_, i) =>
+                      ArgumentTile(argument: debate.arguments[i]),
+                ),
+        ),
         if (debate.isTurnOf(role)) const ArgumentComposer(),
         if (role == Role.moderator) _ModeratorControls(debate: debate),
       ],

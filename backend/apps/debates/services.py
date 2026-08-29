@@ -10,37 +10,73 @@ ROLE_TO_SIDE = {Role.TEAM_A: Side.TEAM_A, Role.TEAM_B: Side.TEAM_B}
 @transaction.atomic
 def debate_create(*, topic: str, display_name: str) -> tuple[Debate, Participant]:
     """Open a debate and make its creator the moderator."""
-    # TODO(step 2): create the Debate, then its moderator Participant.
-    raise NotImplementedError
+    debate = Debate.objects.create(topic=topic)
+    moderator = Participant.objects.create(
+        debate=debate, display_name=display_name, role=Role.MODERATOR
+    )
+    return debate, moderator
 
 
 @transaction.atomic
 def debate_join(*, join_code: str, display_name: str, role: str) -> tuple[Debate, Participant]:
-    # TODO(step 2): find the debate by code (case-insensitive), refuse a second
-    # moderator, then create the Participant.
-    raise NotImplementedError
+    debate = Debate.objects.filter(join_code=join_code.strip().upper()).first()
+    if debate is None:
+        raise NotFound("No debate has that join code.")
+    if role == Role.MODERATOR:
+        raise Forbidden("A debate has one moderator, set when it is created.")
+
+    participant = Participant.objects.create(
+        debate=debate, display_name=display_name, role=role
+    )
+    return debate, participant
 
 
 @transaction.atomic
 def argument_submit(*, debate: Debate, participant: Participant, body: str) -> Argument:
     """Record an argument and hand the turn to the other side."""
-    # TODO(step 3): the heart of phase 1.
-    #   1. Re-read the debate with select_for_update() — two teammates can submit at once.
-    #   2. Refuse unless the debate is ACTIVE.
-    #   3. Map the participant's role to a Side; refuse anyone who has none.
-    #   4. Refuse when it is not that side's turn.
-    #   5. Create the Argument at the current round.
-    #   6. Hand over: A -> B, or B -> A and the round advances.
-    raise NotImplementedError
+    # Two teammates can hit submit at once; lock the turn counter.
+    debate = Debate.objects.select_for_update().get(pk=debate.pk)
+
+    if debate.status != DebateStatus.ACTIVE:
+        raise Conflict("This debate is not taking arguments right now.")
+
+    side = ROLE_TO_SIDE.get(participant.role)
+    if side is None:
+        raise Forbidden("Only Team A and Team B can argue.")
+    if side != debate.current_side:
+        raise Conflict("It is the other team's turn.")
+
+    argument = Argument.objects.create(
+        debate=debate,
+        participant=participant,
+        side=side,
+        round_number=debate.current_round,
+        body=body,
+    )
+
+    if side == Side.TEAM_A:
+        debate.current_side = Side.TEAM_B
+    else:
+        debate.current_side = Side.TEAM_A
+        debate.current_round += 1
+    debate.save(update_fields=["current_side", "current_round"])
+
+    return argument
 
 
 @transaction.atomic
 def debate_start(*, debate: Debate) -> Debate:
-    # TODO(step 2): LOBBY -> ACTIVE, and refuse anything else.
-    raise NotImplementedError
+    if debate.status != DebateStatus.LOBBY:
+        raise Conflict("This debate has already started.")
+    debate.status = DebateStatus.ACTIVE
+    debate.save(update_fields=["status"])
+    return debate
 
 
 @transaction.atomic
 def debate_end(*, debate: Debate) -> Debate:
-    # TODO(step 2): ACTIVE -> VOTING, and refuse anything else.
-    raise NotImplementedError
+    if debate.status != DebateStatus.ACTIVE:
+        raise Conflict("Only a running debate can be ended.")
+    debate.status = DebateStatus.VOTING
+    debate.save(update_fields=["status"])
+    return debate

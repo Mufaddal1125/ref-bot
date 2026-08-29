@@ -10,9 +10,18 @@ class ParticipantTokenAuthentication(BaseAuthentication):
     keyword = "Participant"
 
     def authenticate(self, request):
-        # TODO(step 1): read the header, look the Participant up, return (participant, token).
-        # Return None when the header is absent so other auth classes get a turn.
-        raise NotImplementedError
+        header = get_authorization_header(request).decode()
+        prefix = f"{self.keyword} "
+        if not header.startswith(prefix):
+            return None
+
+        token = header[len(prefix) :].strip()
+        participant = (
+            Participant.objects.select_related("debate").filter(token=token).first()
+        )
+        if participant is None:
+            raise AuthenticationFailed("Unknown participant token.")
+        return participant, token
 
     def authenticate_header(self, request):
         return self.keyword

@@ -24,44 +24,53 @@ def _session(debate, participant) -> Response:
 
 class DebateCreateApi(APIView):
     def post(self, request):
-        # TODO(step 4): validate with DebateCreateSerializer, call debate_create,
-        # return _session(...). Every view below follows this same three-line shape.
-        raise NotImplementedError
+        payload = DebateCreateSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+        debate, moderator = debate_create(**payload.validated_data)
+        return _session(debate, moderator)
 
 
 class DebateJoinApi(APIView):
     def post(self, request):
-        # TODO(step 4)
-        raise NotImplementedError
+        payload = DebateJoinSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+        debate, participant = debate_join(**payload.validated_data)
+        return _session(debate, participant)
 
 
 class DebateDetailApi(APIView):
     permission_classes = [IsDebateParticipant]
 
     def get(self, request, debate_id):
-        # TODO(step 4)
-        raise NotImplementedError
+        debate = debate_get(debate_id)
+        return Response(DebateDetailSerializer(debate).data)
 
 
 class ArgumentCreateApi(APIView):
     permission_classes = [IsDebateParticipant]
 
     def post(self, request, debate_id):
-        # TODO(step 4)
-        raise NotImplementedError
+        payload = ArgumentCreateSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+        argument = argument_submit(
+            debate=debate_get(debate_id),
+            participant=request.user,
+            **payload.validated_data,
+        )
+        return Response(ArgumentOutSerializer(argument).data, status=201)
 
 
 class DebateStartApi(APIView):
     permission_classes = [IsModerator]
 
     def post(self, request, debate_id):
-        # TODO(step 4)
-        raise NotImplementedError
+        debate = debate_start(debate=debate_get(debate_id))
+        return Response(DebateDetailSerializer(debate).data)
 
 
 class DebateEndApi(APIView):
     permission_classes = [IsModerator]
 
     def post(self, request, debate_id):
-        # TODO(step 4)
-        raise NotImplementedError
+        debate = debate_end(debate=debate_get(debate_id))
+        return Response(DebateDetailSerializer(debate).data)
