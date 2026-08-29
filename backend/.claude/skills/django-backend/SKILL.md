@@ -17,6 +17,7 @@ This code gets typed live in front of a room. Write for someone seeing it once, 
 | `views.py` | Parse input → call a service → return a serializer. |
 | `consumers.py` | Socket lifecycle and dispatch. |
 | `jobs.py` | RQ entrypoints: load, call, save, broadcast. |
+| `referee/clients/` | One file per AI provider. The only place the `openai` SDK is imported. |
 
 A view and a consumer that do the same thing call the **same service function**. One copy.
 
@@ -70,6 +71,21 @@ class ArgumentCreateApi(APIView):
 Every message, both directions: `{"type": ..., "payload": {...}}`.
 
 Reach the ORM through `database_sync_to_async`. Broadcast through `apps/common/broadcast.py` so sync views and async consumers share one path.
+
+## The AI provider seam
+
+`apps/referee/clients/` holds one file per provider behind the `RefereeClient` protocol in
+`clients/base.py`. `get_referee_client()` picks one from `settings.REFEREE_PROVIDER`.
+
+Clients take plain arguments and return a `RefereeResult` carrying Pydantic domain objects,
+so provider SDK types stay inside their own file. Everything upstream — `jobs.py`, the
+`Analysis` model, the serializer, Flutter — sees the same shape whichever provider answered.
+Adding a provider is one new file plus a `REFEREE_BASE_URL`.
+
+Gemini is reached through the OpenAI SDK against Google's compatibility endpoint:
+`client.chat.completions.parse(..., response_format=RefereeAnalysis)`. `.parse()` builds the
+strict JSON schema from the Pydantic model, so write no schema by hand. Treat
+`message.parsed is None` as a failed analysis rather than saving an empty result.
 
 ## Comments and docstrings
 
