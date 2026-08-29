@@ -110,12 +110,7 @@ Phase 3 calls **Gemini through the OpenAI SDK**, pointed at Google's OpenAI-comp
 endpoint. Get a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) and
 put it in `.env` as `REFEREE_API_KEY`.
 
-Provider lives behind one seam. `apps/referee/clients/` holds an implementation per provider
-and `get_referee_client()` picks one from `REFEREE_PROVIDER`; nothing outside that folder
-imports the SDK. Moving to OpenAI, Anthropic, or OpenRouter is a new file in there plus a
-`REFEREE_BASE_URL`.
-
-### Without a network
-
-Set `REFEREE_PROVIDER=fake`, or leave `REFEREE_API_KEY` blank, and a canned referee answers
-instead. Every screen behaves identically, so the workshop survives dead conference wifi.
+Provider lives behind one seam: `apps/referee/clients/` is the only place the SDK is
+imported, and it hands back plain Pydantic objects. Any other OpenAI-compatible provider is
+just `REFEREE_BASE_URL` and `REFEREE_MODEL`; one that speaks its own protocol is a new file
+in `clients/`.
