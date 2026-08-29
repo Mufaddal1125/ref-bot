@@ -89,7 +89,7 @@ Facilitator notes live in `docs/phase-N.md`.
 |---|---|---|
 | 1 — Human debate | `phase-1-start` → `phase-1-complete` | Two teams debating over REST, with a refresh button |
 | 2 — Live | `phase-2-start` → `phase-2-complete` | Channels; the refresh button is deleted |
-| 3 — AI referee | `phase-3-start` → `phase-3-complete` | OpenRouter structured output via an RQ job |
+| 3 — AI referee | `phase-3-start` → `phase-3-complete` | Gemini structured output via an RQ job |
 | 4 — Voting | `phase-4-start` → `phase-4-complete` | Audience votes, results update live |
 
 To see exactly what a phase asks you to write:
@@ -104,8 +104,18 @@ To jump to a checkpoint, keeping your own work stashed:
 scripts/checkpoint.ps1 phase-2-start     # or scripts/checkpoint.sh
 ```
 
-## The AI referee without a network
+## The AI referee
 
-Phase 3 calls OpenRouter. Leave `OPENROUTER_API_KEY` blank, or set `REFEREE_FAKE=1`, and a
-canned referee answers instead. Every screen behaves identically, so the workshop survives
-a dead wifi connection.
+Phase 3 calls **Gemini through the OpenAI SDK**, pointed at Google's OpenAI-compatible
+endpoint. Get a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) and
+put it in `.env` as `REFEREE_API_KEY`.
+
+Provider lives behind one seam. `apps/referee/clients/` holds an implementation per provider
+and `get_referee_client()` picks one from `REFEREE_PROVIDER`; nothing outside that folder
+imports the SDK. Moving to OpenAI, Anthropic, or OpenRouter is a new file in there plus a
+`REFEREE_BASE_URL`.
+
+### Without a network
+
+Set `REFEREE_PROVIDER=fake`, or leave `REFEREE_API_KEY` blank, and a canned referee answers
+instead. Every screen behaves identically, so the workshop survives dead conference wifi.

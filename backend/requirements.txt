@@ -18,8 +18,9 @@ psycopg[binary]==3.3.4
 dj-database-url==3.1.2
 python-dotenv==1.2.3
 
-# Phase 3 — AI referee
-httpx==0.28.1
+# Phase 3 — AI referee. The OpenAI SDK talks to Gemini's compatibility endpoint,
+# so swapping provider later is a base_url and a model name.
+openai==3.6.0
 pydantic==2.13.5
 
 pytest==9.1.1
