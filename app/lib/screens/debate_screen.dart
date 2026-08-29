@@ -8,6 +8,7 @@ import '../providers/session_provider.dart';
 import '../widgets/argument_composer.dart';
 import '../widgets/argument_tile.dart';
 import '../widgets/turn_banner.dart';
+import '../widgets/vote_panel.dart';
 
 class DebateScreen extends StatefulWidget {
   const DebateScreen({required this.debateId, super.key});
@@ -96,8 +97,9 @@ class _DebateBody extends StatelessWidget {
           ),
         Expanded(child: _History(debate: debate)),
         if (debate.isTurnOf(role)) const ArgumentComposer(),
-        // TODO(step 8): show VotePanel (in widgets/vote_panel.dart) once the
-        // debate reaches voting, and stays there once it is closed.
+        if (debate.status == DebateStatus.voting ||
+            debate.status == DebateStatus.closed)
+          VotePanel(debate: debate, role: role),
         if (role == Role.moderator) _ModeratorControls(debate: debate),
       ],
     );

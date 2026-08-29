@@ -12,14 +12,24 @@ from .selectors import tally_key
 @transaction.atomic
 def vote_cast(*, debate: Debate, participant: Participant, choice: str) -> Vote:
     """One vote per participant, only while voting is open."""
-    # TODO(step 2): refuse unless the debate is VOTING, refuse a second vote
-    # from the same participant, then create it. The count has changed, so drop
-    # the cached tally before announcing - otherwise the whole room sees stale
-    # numbers for up to two seconds.
-    raise NotImplementedError
+    if debate.status != DebateStatus.VOTING:
+        raise Conflict("Voting is not open for this debate.")
+    if Vote.objects.filter(debate=debate, participant=participant).exists():
+        raise Conflict("You have already voted.")
+
+    vote = Vote.objects.create(debate=debate, participant=participant, choice=choice)
+
+    # The count just changed, so the cached one is wrong.
+    cache.delete(tally_key(debate.id))
+    _announce(debate)
+    return vote
 
 
 @transaction.atomic
 def debate_close(*, debate: Debate) -> Debate:
-    # TODO(step 2): VOTING -> CLOSED, and refuse anything else.
-    raise NotImplementedError
+    if debate.status != DebateStatus.VOTING:
+        raise Conflict("Only a debate in voting can be closed.")
+    debate.status = DebateStatus.CLOSED
+    debate.save(update_fields=["status"])
+    _announce(debate)
+    return debate
