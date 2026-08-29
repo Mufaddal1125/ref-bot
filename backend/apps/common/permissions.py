@@ -9,13 +9,14 @@ class IsDebateParticipant(BasePermission):
     message = "You have not joined this debate."
 
     def has_permission(self, request, view):
-        # TODO(step 1): compare request.user.debate_id with view.kwargs["debate_id"].
-        raise NotImplementedError
+        participant = request.user
+        if participant is None:
+            return False
+        return str(participant.debate_id) == str(view.kwargs.get("debate_id"))
 
 
 class IsModerator(IsDebateParticipant):
     message = "Only the moderator can do that."
 
     def has_permission(self, request, view):
-        # TODO(step 1): a participant of this debate, whose role is MODERATOR.
-        raise NotImplementedError
+        return super().has_permission(request, view) and request.user.role == Role.MODERATOR

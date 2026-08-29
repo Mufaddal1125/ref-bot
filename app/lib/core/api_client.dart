@@ -26,8 +26,6 @@ class ApiClient {
 
   String? token;
 
-  // Worked examples: one POST, one GET. The rest follow the same shape.
-
   Future<Session> createDebate({
     required String topic,
     required String displayName,
@@ -39,33 +37,30 @@ class ApiClient {
     return Session.fromJson(json);
   }
 
-  Future<Debate> fetchDebate(String debateId) async =>
-      Debate.fromJson(await _get('/api/debates/$debateId/'));
-
   Future<Session> joinDebate({
     required String joinCode,
     required String displayName,
     required Role role,
   }) async {
-    // TODO(step 5): POST /api/debates/join/.
-    // Django wants the wire value, so send role.wire and not role itself.
-    throw UnimplementedError();
+    final json = await _post('/api/debates/join/', {
+      'join_code': joinCode,
+      'display_name': displayName,
+      'role': role.wire,
+    });
+    return Session.fromJson(json);
   }
 
-  Future<void> submitArgument(String debateId, String body) async {
-    // TODO(step 5): POST /api/debates/<id>/arguments/ with the body.
-    throw UnimplementedError();
-  }
+  Future<Debate> fetchDebate(String debateId) async =>
+      Debate.fromJson(await _get('/api/debates/$debateId/'));
 
-  Future<Debate> startDebate(String debateId) async {
-    // TODO(step 5): POST /api/debates/<id>/start/, and parse the Debate back.
-    throw UnimplementedError();
-  }
+  Future<void> submitArgument(String debateId, String body) =>
+      _post('/api/debates/$debateId/arguments/', {'body': body});
 
-  Future<Debate> endDebate(String debateId) async {
-    // TODO(step 5)
-    throw UnimplementedError();
-  }
+  Future<Debate> startDebate(String debateId) async =>
+      Debate.fromJson(await _post('/api/debates/$debateId/start/', const {}));
+
+  Future<Debate> endDebate(String debateId) async =>
+      Debate.fromJson(await _post('/api/debates/$debateId/end/', const {}));
 
   Future<Map<String, dynamic>> _get(String path) =>
       _read(() => _dio.get<Map<String, dynamic>>(path));

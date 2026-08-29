@@ -22,19 +22,28 @@ class DebateProvider extends ChangeNotifier {
       _run(() => _api.fetchDebate(debateId));
 
   Future<void> submitArgument(String body) async {
-    // TODO(step 6): post the argument, then reload the debate so the new
-    // history and the new turn arrive together.
-    throw UnimplementedError();
+    final debateId = _debate?.id;
+    if (debateId == null) {
+      return;
+    }
+    await _run(() async {
+      await _api.submitArgument(debateId, body);
+      return _api.fetchDebate(debateId);
+    });
   }
 
   Future<void> start() async {
-    // TODO(step 6)
-    throw UnimplementedError();
+    final debateId = _debate?.id;
+    if (debateId != null) {
+      await _run(() => _api.startDebate(debateId));
+    }
   }
 
   Future<void> end() async {
-    // TODO(step 6)
-    throw UnimplementedError();
+    final debateId = _debate?.id;
+    if (debateId != null) {
+      await _run(() => _api.endDebate(debateId));
+    }
   }
 
   void clear() {
@@ -43,8 +52,6 @@ class DebateProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Worked example: every action runs through here, so loading and error
-  /// handling live in one place.
   Future<void> _run(Future<Debate> Function() call) async {
     _isLoading = true;
     _error = null;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme.dart';
 import '../models/argument.dart';
 
 class ArgumentTile extends StatelessWidget {
@@ -9,17 +10,39 @@ class ArgumentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO(step 8): one entry in the debate history. A Card with 6 of
-    // vertical margin, 16 of padding, holding a Column crossAxisAlignment
-    // start:
-    //
-    //   Row   a 4x16 Container in the side's colour, a gap, then
-    //         'Team A — Round 2' in labelLarge in that colour;
-    //         a Spacer and argument.authorName when there is one
-    //   Text  argument.body
-    //
-    // The colour is sideColor(context, argument.side) — import core/theme.dart.
-    // A Spacer inside a Row is how you push one child to the far end.
-    return const Card(child: SizedBox(height: 72, child: Placeholder()));
+    final color = sideColor(context, argument.side);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(width: 4, height: 16, color: color),
+                const SizedBox(width: 8),
+                Text(
+                  '${argument.side.label} — Round ${argument.roundNumber}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(color: color),
+                ),
+                if (argument.authorName != null) ...[
+                  const Spacer(),
+                  Text(
+                    argument.authorName!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(argument.body),
+          ],
+        ),
+      ),
+    );
   }
 }
