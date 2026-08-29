@@ -1,0 +1,28 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - "**/*.g.dart"
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+  errors:
+    # Generated models get committed, so a stale one should stop the build.
+    missing_required_param: error
+
+linter:
+  rules:
+    # Reinforces the conventions in .claude/skills/flutter-app.
+    prefer_const_constructors: true
+    prefer_const_constructors_in_immutables: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_single_quotes: true
+    prefer_final_locals: true
+    unawaited_futures: true
+    avoid_redundant_argument_values: true
+    require_trailing_commas: true

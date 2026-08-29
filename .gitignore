@@ -1,0 +1,40 @@
+# --- Python / Django ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+db.sqlite3
+.pytest_cache/
+.ruff_cache/
+/backend/media/
+/backend/staticfiles/
+
+# --- Environment ---
+.env
+.env.local
+
+# --- Flutter / Dart ---
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+.pub-cache/
+.pub/
+/app/android/.gradle/
+/app/android/local.properties
+/app/android/key.properties
+/app/ios/Pods/
+/app/ios/.symlinks/
+/app/macos/Pods/
+/app/windows/flutter/ephemeral/
+/app/linux/flutter/ephemeral/
+/app/macos/Flutter/ephemeral/
+*.iml
+
+# --- Editors / OS ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db

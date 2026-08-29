@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          # Dart stays camelCase; the Django payload stays snake_case.
+          field_rename: snake
+          create_to_json: true
+          include_if_null: false
