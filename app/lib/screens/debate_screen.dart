@@ -91,22 +91,62 @@ class _DebateBody extends StatelessWidget {
             color: Theme.of(context).colorScheme.errorContainer,
             child: Text(error, textAlign: TextAlign.center),
           ),
-        Expanded(
-          child: debate.arguments.isEmpty
-              ? const Center(child: Text('No arguments yet.'))
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  itemCount: debate.arguments.length,
-                  itemBuilder: (_, i) =>
-                      ArgumentTile(argument: debate.arguments[i]),
-                ),
-        ),
+        Expanded(child: _History(debate: debate)),
         if (debate.isTurnOf(role)) const ArgumentComposer(),
         if (role == Role.moderator) _ModeratorControls(debate: debate),
       ],
+    );
+  }
+}
+
+/// The debate history. Stateful now, because once arguments arrive on their
+/// own the list has to move on its own too.
+class _History extends StatefulWidget {
+  const _History({required this.debate});
+
+  final Debate debate;
+
+  @override
+  State<_History> createState() => _HistoryState();
+}
+
+class _HistoryState extends State<_History> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_History oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // TODO(step 8): a broadcast has landed and the history is one longer than
+    // it was. Scroll to the end when that happens — and only then, or the list
+    // yanks itself down while somebody is reading back through it.
+    //
+    // Two things bite here:
+    //  - the new row does not exist until the next frame, so book the scroll
+    //    for after it with WidgetsBinding.instance.addPostFrameCallback;
+    //  - _scroll has no clients until a ListView is attached, and an empty
+    //    history has none. Ask _scroll.hasClients before touching position.
+    //
+    // Then _scroll.animateTo(_scroll.position.maxScrollExtent, ...).
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final arguments = widget.debate.arguments;
+
+    if (arguments.isEmpty) {
+      return const Center(child: Text('No arguments yet.'));
+    }
+    return ListView.builder(
+      controller: _scroll,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: arguments.length,
+      itemBuilder: (_, i) => ArgumentTile(argument: arguments[i]),
     );
   }
 }

@@ -16,6 +16,9 @@ DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 ALLOWED_HOSTS = ["*"] if DEBUG else os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
 
 INSTALLED_APPS = [
+    # Ahead of staticfiles so runserver speaks ASGI.
+    "daphne",
+    "channels",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -68,6 +71,15 @@ DATABASES = {
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 
 # Redis is split by purpose: db 0 channel layer, db 1 cache, db 2 jobs.
+CHANNEL_LAYERS = {
+    "default": {
+        # The pub/sub layer, not channels_redis.core: the core layer's blocking
+        # read races its own socket timeout and drops idle sockets every 5s.
+        "BACKEND": "channels_redis.pubsub.RedisPubSubChannelLayer",
+        "CONFIG": {"hosts": [f"{REDIS_URL}/0"]},
+    },
+}
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
