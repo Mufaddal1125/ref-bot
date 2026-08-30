@@ -5,11 +5,15 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 import os
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 REPO_ROOT = BASE_DIR.parent
 
-load_dotenv(REPO_ROOT / ".env")
+load_dotenv(REPO_ROOT / ".env", override=True)  # .env is for local dev, not production
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-not-secret")
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
@@ -110,6 +114,10 @@ REFEREE_MODEL = os.getenv("REFEREE_MODEL", "gemini-3.5-flash-lite")
 REFEREE_BASE_URL = os.getenv(
     "REFEREE_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/"
 )
+
+logger.info(f"REFEREE_API_KEY: *****{REFEREE_API_KEY[:4]}")  # Don't print the whole key
+logger.info(f"REFEREE_MODEL: {REFEREE_MODEL}")
+logger.info(f"REFEREE_BASE_URL: {REFEREE_BASE_URL}")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
