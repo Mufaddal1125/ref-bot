@@ -1,0 +1,48 @@
+{
+  // Open this file ("File → Open Workspace from File…") to get the whole of
+  // RefBot — Django backend, Flutter client, local Dart packages, infra — in
+  // one window, wired to the run configs in .vscode/launch.json.
+  //
+  // To run both halves at once: Run and Debug (Ctrl+Shift+D) →
+  //   "RefBot: full stack"                     backend + Flutter on Chrome
+  //   "RefBot: full stack + referee worker"    the above plus the RQ worker (phase 3+)
+  // Both bring Postgres and Redis up first via the "infra: docker compose up" task.
+  "folders": [
+    {
+      "name": "refbot",
+      "path": "."
+    }
+  ],
+  "settings": {
+    // Windows path. On macOS / Linux change to backend/.venv/bin/python.
+    "python.defaultInterpreterPath": "${workspaceFolder:refbot}/backend/.venv/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.cwd": "${workspaceFolder:refbot}/backend",
+    "python.testing.pytestArgs": [],
+
+    "dart.runPubGetOnPubspecChanges": "always",
+
+    "search.exclude": {
+      "**/build": true,
+      "**/.dart_tool": true,
+      "**/.venv": true,
+      "**/__pycache__": true
+    },
+
+    "[python]": { "editor.tabSize": 4 },
+    "[dart]": { "editor.tabSize": 2, "editor.rulers": [80] }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.debugpy",
+      "batisteo.vscode-django",
+      "dart-code.dart-code",
+      "dart-code.flutter",
+      "ms-azuretools.vscode-docker"
+    ]
+  }
+}

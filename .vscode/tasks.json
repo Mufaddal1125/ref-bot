@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "infra: docker compose up",
+      "type": "shell",
+      "command": "docker compose up -d --wait",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    },
+    {
+      "label": "infra: docker compose down",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "backend: migrate",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} manage.py migrate",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": []
+    },
+    {
+      "label": "backend: pytest",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m pytest",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "app: flutter pub get",
+      "type": "shell",
+      "command": "flutter pub get",
+      "options": { "cwd": "${workspaceFolder}/app" },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  // RefBot run/debug configs. Backend is Django, frontend is Flutter.
+  // "RefBot: full stack" runs both at once (and brings docker up first).
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Backend: Django runserver",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/manage.py",
+      "args": ["runserver"],
+      "cwd": "${workspaceFolder}/backend",
+      "django": true,
+      "autoReload": { "enable": false },
+      "justMyCode": false,
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/backend/.venv/bin/python",
+      "windows": {
+        "python": "${workspaceFolder}\\backend\\.venv\\Scripts\\python.exe"
+      }
+    },
+    {
+      "name": "Backend: RQ worker (referee)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/manage.py",
+      // Windows has no fork(), so the worker has to run jobs in-process.
+      "args": ["rqworker", "referee"],
+      "cwd": "${workspaceFolder}/backend",
+      "django": true,
+      "justMyCode": false,
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/backend/.venv/bin/python",
+      "windows": {
+        "python": "${workspaceFolder}\\backend\\.venv\\Scripts\\python.exe",
+        "args": ["rqworker", "referee", "--worker-class", "rq.SimpleWorker"]
+      }
+    },
+    {
+      "name": "Frontend: Flutter (Chrome)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/app",
+      "deviceId": "chrome",
+      "args": [
+        "--web-port=8080"
+      ],
+      "toolArgs": ["--dart-define=API_BASE_URL=http://localhost:8000"]
+    },
+    {
+      "name": "Frontend: Flutter (Windows desktop)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/app",
+      "deviceId": "windows",
+      "toolArgs": ["--dart-define=API_BASE_URL=http://localhost:8000"]
+    },
+    {
+      "name": "Frontend: Flutter (Android emulator)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/app",
+      // 10.0.2.2 is how the emulator reaches the host's localhost.
+      "toolArgs": ["--dart-define=API_BASE_URL=http://10.0.2.2:8000"]
+    },
+    {
+      "name": "Frontend: Flutter (pick a device)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/app",
+      "toolArgs": ["--dart-define=API_BASE_URL=http://localhost:8000"]
+    },
+    {
+      "name": "Frontend: Flutter tests",
+      "type": "dart",
+      "request": "launch",
+      "program": "test/",
+      "cwd": "${workspaceFolder}/app"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "RefBot: full stack",
+      "configurations": [
+        "Backend: Django runserver",
+        "Frontend: Flutter (Chrome)"
+      ],
+      "preLaunchTask": "infra: docker compose up",
+      "stopAll": true
+    },
+    {
+      "name": "RefBot: full stack + referee worker",
+      "configurations": [
+        "Backend: Django runserver",
+        "Backend: RQ worker (referee)",
+        "Frontend: Flutter (Chrome)"
+      ],
+      "preLaunchTask": "infra: docker compose up",
+      "stopAll": true
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  // Windows path. On macOS / Linux change to backend/.venv/bin/python.
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/Scripts/python.exe",
+  "python.terminal.activateEnvironment": true,
+
+  // pytest.ini lives in backend/, so tests are discovered from there.
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.cwd": "${workspaceFolder}/backend",
+  "python.testing.pytestArgs": [],
+
+  "dart.flutterCreatePlatforms": ["web", "windows", "android", "ios"],
+
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.dart_tool": true
+  },
+
+  "[python]": { "editor.tabSize": 4 },
+  "[dart]": { "editor.tabSize": 2, "editor.rulers": [80] }
+}
