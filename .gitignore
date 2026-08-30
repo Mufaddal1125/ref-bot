@@ -38,3 +38,7 @@ build/
 !.vscode/extensions.json
 .DS_Store
 Thumbs.db
+
+
+docs/syllabus-map.html
+docs/syllabus-map.md
