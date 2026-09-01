@@ -37,6 +37,11 @@ def debate_join(*, join_code: str, display_name: str, role: str) -> tuple[Debate
         raise NotFound("No debate has that join code.")
     if role == Role.MODERATOR:
         raise Forbidden("A debate has one moderator, set when it is created.")
+    # max 5 participants on either side
+    if role in (Role.TEAM_A, Role.TEAM_B):
+        role_count = Participant.objects.filter(debate=debate, role=role).count()
+        if role_count >= 5:
+            raise Forbidden(f"Side: {ROLE_TO_SIDE[role].label} already has {role_count} participant.")
 
     participant = Participant.objects.create(
         debate=debate, display_name=display_name, role=role
@@ -76,6 +81,11 @@ def argument_submit(*, debate: Debate, participant: Participant, body: str) -> A
 
     _ask_the_referee(argument)
     _announce(debate)
+
+    # auto end after 12 rounds
+    if debate.current_round > 12:
+        debate_end(debate=debate)
+
     return argument
 
 
