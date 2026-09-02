@@ -1,0 +1,48 @@
+# Everything the room touches arrives here on one origin: the Flutter build,
+# the REST API, the WebSocket. One origin means no CORS and no second port to
+# open in the firewall.
+
+{
+	admin off
+	auto_https off
+}
+
+:80 {
+	encode zstd gzip
+
+	# Django's half. reverse_proxy handles the /ws/ upgrade on its own.
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+	handle /ws/* {
+		reverse_proxy backend:8000
+	}
+	handle /admin/* {
+		reverse_proxy backend:8000
+	}
+	handle /django-rq/* {
+		reverse_proxy backend:8000
+	}
+	handle /healthz {
+		reverse_proxy backend:8000
+	}
+
+	# collectstatic output, for the admin and the RQ dashboard.
+	handle_path /static/* {
+		root * /srv/static
+		file_server
+	}
+
+	# The Flutter build. Deep links are client-side routes, so anything that is
+	# not a file on disk is index.html.
+	handle {
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

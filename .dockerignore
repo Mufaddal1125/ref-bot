@@ -1,0 +1,25 @@
+# The build context is the repo root so deploy/Dockerfile can reach both
+# backend/ and deploy/. Everything else — the Flutter build especially — would
+# just be hundreds of megabytes shipped to the daemon on every build.
+
+app/
+packages/
+docs/
+scripts/
+.git/
+.github/
+.vscode/
+.claude/
+
+.env
+.env.*
+!.env.deploy.example
+
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.ruff_cache/
+backend/.venv/
+backend/staticfiles/
+backend/media/
+backend/db.sqlite3

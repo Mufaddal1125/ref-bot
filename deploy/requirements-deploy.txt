@@ -1,0 +1,6 @@
+# Extra packages the deployment image needs. backend/requirements.txt stays as
+# pinned for the workshop, so nobody's venv changes because of this directory.
+
+# runserver and daphne are both a single process. uvicorn forks one per core;
+# the Redis channel layer is what keeps those processes one room.
+uvicorn[standard]>=0.34,<1.0

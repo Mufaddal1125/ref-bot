@@ -88,6 +88,59 @@ For a phone, run the backend on all interfaces and open the port:
 python manage.py runserver 0.0.0.0:8000
 ```
 
+## Running it for a room
+
+The three-terminal setup above is for one developer. To put RefBot in front of a
+couple of hundred people on the same network, one machine runs everything in Docker:
+
+```powershell
+scripts\deploy-local.ps1        # scripts/deploy-local.sh elsewhere
+```
+
+That builds the Flutter web client, brings up `docker-compose.deploy.yml`, and prints
+the URL — `http://<this machine's LAN IP>`. Everyone opens that address; nobody
+installs anything.
+
+| | |
+|---|---|
+| `caddy` | Serves the Flutter build and proxies `/api`, `/ws`, `/admin`, `/static`. The only published port |
+| `backend` | `uvicorn` with 4 worker processes, `config.settings.lan` |
+| `worker` | 2 × `rqworker referee` |
+| `postgres` `redis` | Own volumes, own project name, no published ports |
+
+One origin serves the client and the API, so there is no CORS, no second port to open,
+and the WebSocket is `ws://<same host>/ws/…`. The client is compiled against that
+address — rerun the script if the machine's IP changes.
+
+```powershell
+scripts\deploy-local.ps1 -Port 8080     # if IIS or http.sys already owns 80
+scripts\deploy-local.ps1 -HostIp 192.168.1.20
+scripts\deploy-local.ps1 -SkipBuild     # backend-only change
+```
+
+Windows Firewall blocks the port for other devices until you allow it once, from an
+admin shell — the script prints the exact `New-NetFirewallRule` line.
+
+```bash
+docker compose -f docker-compose.deploy.yml logs -f backend worker
+docker compose -f docker-compose.deploy.yml down          # add -v to drop the data
+```
+
+Secrets live in `.env.deploy`, which the script creates from `.env.deploy.example`
+with a fresh `DJANGO_SECRET_KEY`. Put `REFEREE_API_KEY` in it. The dev `.env` and
+`docker-compose.yml` are untouched: the two stacks have different project names and
+different volumes, so they can both be up at once.
+
+### Sizing
+
+Four ASGI workers and 200 Postgres connections carry a few hundred people comfortably
+— WebSockets are cheap, and the referee's Gemini call is the only slow thing, which is
+why it is on the queue and not the request. Scale a piece if you need to:
+
+```bash
+docker compose -f docker-compose.deploy.yml up -d --scale worker=4
+```
+
 ## Tests
 
 Every phase ships its tests red in the starter tag and green in the complete tag, on both
