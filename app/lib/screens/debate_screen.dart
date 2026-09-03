@@ -7,9 +7,14 @@ import '../providers/debate_provider.dart';
 import '../providers/session_provider.dart';
 import '../widgets/argument_composer.dart';
 import '../widgets/argument_tile.dart';
+import '../widgets/chat_panel.dart';
 import '../widgets/participant_grid.dart';
 import '../widgets/turn_banner.dart';
 import '../widgets/vote_panel.dart';
+
+/// A projector is wide; a phone is not. One breakpoint, one layout each — and
+/// which side of it we are on decides where the chat lives.
+const _wide = 900.0;
 
 class DebateScreen extends StatefulWidget {
   const DebateScreen({required this.debateId, super.key});
@@ -40,6 +45,8 @@ class _DebateScreenState extends State<DebateScreen> {
     final debates = context.watch<DebateProvider>();
     final session = context.watch<SessionProvider>();
     final debate = debates.debate;
+    final role = session.role ?? Role.audience;
+    final isWide = MediaQuery.sizeOf(context).width >= _wide;
 
     return Scaffold(
       appBar: AppBar(
@@ -51,6 +58,17 @@ class _DebateScreenState extends State<DebateScreen> {
                 padding: const EdgeInsets.only(right: 12),
                 child: Text(debate.joinCode),
               ),
+            ),
+          // On a wide screen the chat is already on screen, in its own column.
+          if (debate != null && !isWide)
+            IconButton(
+              onPressed: () => _openChatSheet(context, role),
+              icon: Badge.count(
+                count: debates.unreadChat,
+                isLabelVisible: debates.unreadChat > 0,
+                child: const Icon(Icons.chat_bubble_outline),
+              ),
+              tooltip: 'Live chat',
             ),
           IconButton(
             onPressed: () async {
@@ -69,9 +87,37 @@ class _DebateScreenState extends State<DebateScreen> {
           child: CircularProgressIndicator(),
         ),
         null => Center(child: Text(debates.error ?? 'Connecting…')),
-        final d => _DebateBody(debate: d, role: session.role ?? Role.audience),
+        final d => _DebateBody(debate: d, role: role),
       },
     );
+  }
+
+  /// On a phone the chat is a sheet, not a column: there is only one column.
+  Future<void> _openChatSheet(BuildContext context, Role role) async {
+    final debates = context.read<DebateProvider>();
+
+    debates.setChatOpen(true);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (sheet) {
+        final height = MediaQuery.sizeOf(sheet).height;
+        // The keyboard has to come out of the sheet's height, not sit over the
+        // box somebody is typing into.
+        final keyboard = MediaQuery.viewInsetsOf(sheet).bottom;
+
+        return Padding(
+          padding: EdgeInsets.only(bottom: keyboard),
+          child: SizedBox(
+            height: (height * 0.85 - keyboard).clamp(200.0, height),
+            child: ChatPanel(role: role),
+          ),
+        );
+      },
+    );
+    debates.setChatOpen(false);
   }
 }
 
@@ -84,9 +130,7 @@ class _DebateBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final debates = context.watch<DebateProvider>();
-
-    // A projector is wide; a phone is not. One breakpoint, one layout each.
-    final isWide = MediaQuery.sizeOf(context).width >= 900;
+    final isWide = MediaQuery.sizeOf(context).width >= _wide;
 
     return Column(
       children: [
@@ -106,13 +150,7 @@ class _DebateBody extends StatelessWidget {
                   children: [
                     Expanded(flex: 3, child: _History(debate: debate)),
                     const VerticalDivider(width: 1),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: ParticipantGrid(
-                          participants: debate.participants,
-                        ),
-                      ),
-                    ),
+                    Expanded(child: _RoomPanel(debate: debate, role: role)),
                   ],
                 )
               : _History(debate: debate),
@@ -122,6 +160,99 @@ class _DebateBody extends StatelessWidget {
             debate.status == DebateStatus.closed)
           VotePanel(debate: debate, role: role),
         if (role == Role.moderator) _ModeratorControls(debate: debate),
+      ],
+    );
+  }
+}
+
+/// The right-hand column on a wide screen: the chat, with the room behind it.
+///
+/// Chat leads, because it is the half that changes second by second. The tab
+/// also tells the provider when the chat is being looked at, so the unread
+/// count means "missed" rather than "arrived".
+class _RoomPanel extends StatefulWidget {
+  const _RoomPanel({required this.debate, required this.role});
+
+  final Debate debate;
+  final Role role;
+
+  @override
+  State<_RoomPanel> createState() => _RoomPanelState();
+}
+
+class _RoomPanelState extends State<_RoomPanel>
+    with SingleTickerProviderStateMixin {
+  static const _chatTab = 0;
+
+  late final TabController _tabs = TabController(length: 2, vsync: this)
+    ..addListener(_reportChatVisible);
+
+  DebateProvider? _debates;
+
+  @override
+  void initState() {
+    super.initState();
+    // Chat is the tab this opens on, so nothing is unread to begin with.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reportChatVisible());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _debates = context.read<DebateProvider>();
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    // The window shrank past the breakpoint and the chat went with it. Deferred,
+    // because notifying listeners while this subtree unmounts is not safe.
+    final debates = _debates;
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => debates?.setChatOpen(false),
+    );
+    super.dispose();
+  }
+
+  void _reportChatVisible() {
+    if (mounted) {
+      _debates?.setChatOpen(_tabs.index == _chatTab);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final unread = context.watch<DebateProvider>().unreadChat;
+
+    return Column(
+      children: [
+        TabBar(
+          controller: _tabs,
+          tabs: [
+            Tab(
+              child: Badge.count(
+                count: unread,
+                isLabelVisible: unread > 0,
+                offset: const Offset(12, -6),
+                child: const Text('Chat'),
+              ),
+            ),
+            Tab(text: 'People (${widget.debate.participants.length})'),
+          ],
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabs,
+            children: [
+              ChatPanel(role: widget.role),
+              SingleChildScrollView(
+                child: ParticipantGrid(
+                  participants: widget.debate.participants,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

@@ -3,16 +3,24 @@ from rest_framework.views import APIView
 
 from apps.common.permissions import IsDebateParticipant, IsModerator
 
-from .selectors import debate_get
+from .selectors import chat_messages_recent, debate_get
 from .serializers import (
     ArgumentCreateSerializer,
     ArgumentOutSerializer,
+    ChatMessageOutSerializer,
     DebateCreateSerializer,
     DebateDetailSerializer,
     DebateJoinSerializer,
     SessionSerializer,
 )
-from .services import argument_submit, debate_create, debate_end, debate_join, debate_start
+from .services import (
+    argument_submit,
+    chat_message_delete,
+    debate_create,
+    debate_end,
+    debate_join,
+    debate_start,
+)
 
 
 def _session(debate, participant) -> Response:
@@ -76,3 +84,21 @@ class DebateEndApi(APIView):
     def post(self, request, debate_id):
         debate = debate_end(debate=debate_get(debate_id))
         return Response(DebateDetailSerializer(debate).data)
+
+
+class ChatListApi(APIView):
+    """The backlog. New messages arrive on the socket; this is what came before."""
+
+    permission_classes = [IsDebateParticipant]
+
+    def get(self, request, debate_id):
+        messages = chat_messages_recent(debate_id)
+        return Response(ChatMessageOutSerializer(messages, many=True).data)
+
+
+class ChatDeleteApi(APIView):
+    permission_classes = [IsModerator]
+
+    def delete(self, request, debate_id, message_id):
+        chat_message_delete(debate=debate_get(debate_id), message_id=message_id)
+        return Response(status=204)

@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.referee.serializers import AnalysisOutSerializer
 
-from .models import Argument, Debate, Participant, Role
+from .models import Argument, ChatMessage, Debate, Participant, Role
 
 # --- input ---------------------------------------------------------------
 
@@ -20,6 +20,12 @@ class DebateJoinSerializer(serializers.Serializer):
 
 class ArgumentCreateSerializer(serializers.Serializer):
     body = serializers.CharField(max_length=4000)
+
+
+class ChatMessageCreateSerializer(serializers.Serializer):
+    """Also used off the socket, so it has to stand on its own without a request."""
+
+    body = serializers.CharField(max_length=500, allow_blank=False, trim_whitespace=True)
 
 
 # --- output --------------------------------------------------------------
@@ -46,6 +52,26 @@ class ArgumentOutSerializer(serializers.ModelSerializer):
             "created_at",
             "analysis",
         ]
+
+
+class ChatMessageOutSerializer(serializers.ModelSerializer):
+    is_deleted = serializers.BooleanField(read_only=True)
+    body = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ChatMessage
+        fields = [
+            "id",
+            "author_name",
+            "author_role",
+            "body",
+            "created_at",
+            "is_deleted",
+        ]
+
+    def get_body(self, message) -> str:
+        """A removed message keeps its row and its place, but not its words."""
+        return "" if message.is_deleted else message.body
 
 
 class DebateOutSerializer(serializers.ModelSerializer):

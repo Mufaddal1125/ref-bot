@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../models/chat_message.dart';
 import '../models/debate.dart';
 import '../models/enums.dart';
 import '../models/session.dart';
@@ -69,19 +70,35 @@ class ApiClient {
   Future<Debate> closeDebate(String debateId) async =>
       Debate.fromJson(await _post('/api/debates/$debateId/close/', const {}));
 
+  /// The chat backlog. New lines arrive on the socket; this is what came before.
+  Future<List<ChatMessage>> fetchChatMessages(String debateId) async {
+    final response = await _send(
+      () => _dio.get<List<dynamic>>('/api/debates/$debateId/chat/'),
+    );
+    return (response.data ?? const [])
+        .map((row) => ChatMessage.fromJson(row as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Moderator only. The message stays in the list, with its words removed.
+  Future<void> deleteChatMessage(String debateId, String messageId) => _send(
+    () => _dio.delete<void>('/api/debates/$debateId/chat/$messageId/'),
+  );
+
   Future<Map<String, dynamic>> _get(String path) =>
       _read(() => _dio.get<Map<String, dynamic>>(path));
 
   Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) =>
       _read(() => _dio.post<Map<String, dynamic>>(path, data: body));
 
-  /// Turns dio's failures into the one exception the providers know about.
   Future<Map<String, dynamic>> _read(
     Future<Response<Map<String, dynamic>>> Function() send,
-  ) async {
+  ) async => (await _send(send)).data ?? const {};
+
+  /// Turns dio's failures into the one exception the providers know about.
+  Future<Response<T>> _send<T>(Future<Response<T>> Function() send) async {
     try {
-      final response = await send();
-      return response.data ?? const {};
+      return await send();
     } on DioException catch (e) {
       final json = e.response?.data;
       if (json is Map) {

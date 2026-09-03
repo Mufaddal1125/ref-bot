@@ -19,4 +19,14 @@ class ServerEvent {
 
   static const debateUpdated = 'debate.updated';
   static const error = 'error';
+
+  /// One new chat line, not the whole debate — chat is far too chatty for that.
+  static const chatMessage = 'chat.message';
+  static const chatDeleted = 'chat.deleted';
+
+  /// A send this client made was refused. Nobody else hears about it.
+  static const chatError = 'chat.error';
+
+  /// Sent up, not down: the only frame a client writes to the socket.
+  static const chatSend = 'chat.send';
 }

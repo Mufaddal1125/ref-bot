@@ -12,7 +12,9 @@ const closeUnauthorized = 4401;
 
 /// Holds one socket to a debate open, reconnecting with backoff when it drops.
 ///
-/// Listen-only: changes go to the REST API, and arrive back here as events.
+/// Debate changes still go to the REST API and arrive back here as events. Chat
+/// is the exception: it goes up this socket, because it has no rules to enforce
+/// and every round trip it saves is one somebody can feel.
 class DebateSocket {
   DebateSocket({required this.debateId, required this.token});
 
@@ -49,6 +51,19 @@ class DebateSocket {
     // A refused upgrade lands on ready as well as on the stream. Without this
     // it escapes as an unhandled error and takes the app down.
     unawaited(channel.ready.catchError((Object _) {}));
+  }
+
+  /// Sends one frame up, if there is a socket to send it up.
+  ///
+  /// A message typed during a reconnect is dropped rather than queued: by the
+  /// time the socket is back the moment it belonged to has usually passed.
+  bool send(String type, Map<String, dynamic> payload) {
+    final channel = _channel;
+    if (_disposed || channel == null || channel.closeCode != null) {
+      return false;
+    }
+    channel.sink.add(jsonEncode({'type': type, 'payload': payload}));
+    return true;
   }
 
   Future<void> dispose() async {

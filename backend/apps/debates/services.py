@@ -1,11 +1,18 @@
+from datetime import timedelta
+
 from django.db import transaction
+from django.utils import timezone
 
 from apps.common.broadcast import broadcast
 from apps.common.errors import Conflict, Forbidden, NotFound
 
-from .models import Argument, Debate, DebateStatus, Participant, Role, Side
+from .models import Argument, ChatMessage, Debate, DebateStatus, Participant, Role, Side
 
 ROLE_TO_SIDE = {Role.TEAM_A: Side.TEAM_A, Role.TEAM_B: Side.TEAM_B}
+
+# One line every two seconds is a conversation; faster than that is a flood, and
+# a flood on a projector in front of two hundred people is somebody's afternoon.
+CHAT_MIN_INTERVAL = timedelta(seconds=2)
 
 
 def _announce(debate: Debate) -> None:
@@ -121,3 +128,59 @@ def debate_end(*, debate: Debate) -> Debate:
     debate.save(update_fields=["status"])
     _announce(debate)
     return debate
+
+
+# --- chat ----------------------------------------------------------------
+#
+# Chat does not go through _announce. A debate.updated carries every argument,
+# every analysis and the tally; sending all of that again because somebody typed
+# "lol" would cost more than the debate itself. Each chat event carries one row.
+
+
+def _announce_chat(debate_id, type_: str, payload: dict) -> None:
+    transaction.on_commit(lambda: broadcast(debate_id, type_, payload))
+
+
+@transaction.atomic
+def chat_message_send(*, debate: Debate, participant: Participant, body: str) -> ChatMessage:
+    """Anyone in the room, in any phase. The one limit is how fast."""
+    from .serializers import ChatMessageCreateSerializer, ChatMessageOutSerializer
+
+    # Validated here rather than at the edge: the socket has no DRF view to do
+    # it, and one door means one set of rules.
+    payload = ChatMessageCreateSerializer(data={"body": body})
+    payload.is_valid(raise_exception=True)
+
+    latest = (
+        ChatMessage.objects.filter(debate=debate, participant=participant)
+        .order_by("-created_at")
+        .first()
+    )
+    if latest is not None and timezone.now() - latest.created_at < CHAT_MIN_INTERVAL:
+        raise Conflict("Slow down a moment.")
+
+    message = ChatMessage.objects.create(
+        debate=debate,
+        participant=participant,
+        author_name=participant.display_name,
+        author_role=participant.role,
+        body=payload.validated_data["body"],
+    )
+
+    _announce_chat(debate.id, "chat.message", ChatMessageOutSerializer(message).data)
+    return message
+
+
+@transaction.atomic
+def chat_message_delete(*, debate: Debate, message_id) -> ChatMessage:
+    """The moderator's remove. Idempotent: removing a removed line is a no-op."""
+    message = ChatMessage.objects.filter(pk=message_id, debate=debate).first()
+    if message is None:
+        raise NotFound("No such message.")
+
+    if not message.is_deleted:
+        message.deleted_at = timezone.now()
+        message.save(update_fields=["deleted_at"])
+
+    _announce_chat(debate.id, "chat.deleted", {"id": str(message.id)})
+    return message

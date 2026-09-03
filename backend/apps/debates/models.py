@@ -93,3 +93,35 @@ class Argument(models.Model):
 
     def __str__(self):
         return f"{self.get_side_display()} round {self.round_number}"
+
+
+class ChatMessage(models.Model):
+    """A line in the room's side-chat. Anyone may write one, at any point."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    debate = models.ForeignKey(Debate, related_name="chat_messages", on_delete=models.CASCADE)
+    participant = models.ForeignKey(Participant, null=True, on_delete=models.SET_NULL)
+
+    # Copied at write time rather than read off the participant. The sender can
+    # leave, and a transcript with anonymous holes in it reads worse than one
+    # that still remembers who said what.
+    author_name = models.CharField(max_length=40)
+    author_role = models.CharField(max_length=16, choices=Role)
+
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # Soft, so a removal shows as a removal. Deleting the row would leave a
+    # silent gap that reads, to everyone who saw the message, like a bug.
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        indexes = [models.Index(fields=["debate", "created_at"])]
+
+    def __str__(self):
+        return f"{self.author_name}: {self.body[:40]}"
+
+    @property
+    def is_deleted(self) -> bool:
+        return self.deleted_at is not None
